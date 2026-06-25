@@ -1,1397 +1,2443 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pulsewidth — Website Benchmark & Stability Tests</title>
-<meta name="description" content="Test how fast a website responds, how stable it stays under repeated requests, and whether it holds up — straight from your browser, no signup.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pulsewidth — Website Benchmark & Stability Tests</title>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2824959172169836"
+    crossorigin="anonymous"></script>
+  <meta name="description"
+    content="Test how fast a website responds, how stable it stays under repeated requests, and whether it holds up — straight from your browser, no signup.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0B0E11;
+      --bg-raised: #11151A;
+      --panel: #161B20;
+      --panel-2: #1A2026;
+      --border: #262E35;
+      --border-soft: #1E252B;
+      --text: #E8ECEF;
+      --text-dim: #8B96A1;
+      --text-faint: #5A6570;
+      --accent: #5EE6D1;
+      --accent-dim: #3A8F82;
+      --accent-glow: rgba(94, 230, 209, 0.18);
+      --warn: #F5C76B;
+      --fail: #FF6B5E;
+      --good: #5EE6D1;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-body: 'Inter', system-ui, sans-serif;
+    }
 
-  :root{
-    --bg:#0B0E11;
-    --bg-raised:#11151A;
-    --panel:#161B20;
-    --panel-2:#1A2026;
-    --border:#262E35;
-    --border-soft:#1E252B;
-    --text:#E8ECEF;
-    --text-dim:#8B96A1;
-    --text-faint:#5A6570;
-    --accent:#5EE6D1;
-    --accent-dim:#3A8F82;
-    --accent-glow:rgba(94,230,209,0.18);
-    --warn:#F5C76B;
-    --fail:#FF6B5E;
-    --good:#5EE6D1;
-    --font-mono:'JetBrains Mono', monospace;
-    --font-body:'Inter', system-ui, sans-serif;
-  }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-  *{margin:0;padding:0;box-sizing:border-box;}
-  html{scroll-behavior:smooth;}
-  body{
-    background:var(--bg);
-    color:var(--text);
-    font-family:var(--font-body);
-    -webkit-font-smoothing:antialiased;
-    line-height:1.5;
-    overflow-x:hidden;
-  }
-  body::before{
-    content:'';
-    position:fixed;
-    inset:0;
-    background-image:
-      radial-gradient(circle at 15% 8%, rgba(94,230,209,0.05), transparent 40%),
-      radial-gradient(circle at 85% 90%, rgba(94,230,209,0.04), transparent 45%);
-    pointer-events:none;
-    z-index:0;
-  }
-  a{color:inherit;text-decoration:none;}
-  ::selection{background:var(--accent);color:#06100E;}
-  :focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px;}
+    html {
+      scroll-behavior: smooth;
+    }
 
-  .wrap{max-width:1180px;margin:0 auto;padding:0 32px;}
-  @media (max-width:640px){.wrap{padding:0 20px;}}
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
 
-  .mono{font-family:var(--font-mono);}
-  .dim{color:var(--text-dim);}
-  .faint{color:var(--text-faint);}
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 15% 8%, rgba(94, 230, 209, 0.05), transparent 40%),
+        radial-gradient(circle at 85% 90%, rgba(94, 230, 209, 0.04), transparent 45%);
+      pointer-events: none;
+      z-index: 0;
+    }
 
-  /* ===== NAV ===== */
-  header{
-    position:sticky;top:0;z-index:50;
-    background:rgba(11,14,17,0.85);
-    backdrop-filter:blur(12px);
-    border-bottom:1px solid var(--border-soft);
-  }
-  nav{
-    display:flex;align-items:center;justify-content:space-between;
-    padding:18px 32px;max-width:1180px;margin:0 auto;
-  }
-  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;letter-spacing:-0.01em;}
-  .brand-mark{
-    width:22px;height:22px;position:relative;flex-shrink:0;
-  }
-  .brand-mark svg{width:100%;height:100%;display:block;}
-  .nav-links{display:flex;gap:32px;align-items:center;}
-  .nav-links a{
-    font-size:14px;color:var(--text-dim);transition:color 0.15s;
-    font-family:var(--font-mono);
-  }
-  .nav-links a:hover{color:var(--text);}
-  .nav-cta{
-    font-family:var(--font-mono);font-size:13px;font-weight:600;
-    background:var(--accent);color:#06100E;
-    padding:9px 18px;border-radius:5px;
-    border:none;cursor:pointer;transition:transform 0.15s, box-shadow 0.15s;
-  }
-  .nav-cta:hover{transform:translateY(-1px);box-shadow:0 4px 16px var(--accent-glow);}
-  .nav-mobile-toggle{display:none;background:none;border:none;color:var(--text);cursor:pointer;padding:4px;align-items:center;}
-  .mobile-menu{
-    display:none;flex-direction:column;
-    border-top:1px solid var(--border-soft);
-    background:var(--bg-raised);
-    overflow:hidden;max-height:0;transition:max-height 0.25s ease;
-  }
-  .mobile-menu.open{max-height:220px;}
-  .mobile-menu a{
-    padding:16px 32px;font-family:var(--font-mono);font-size:14px;color:var(--text-dim);
-    border-bottom:1px solid var(--border-soft);
-  }
-  .mobile-menu a:active{color:var(--accent);}
-  @media (max-width:780px){
-    .nav-links{display:none;}
-    .nav-mobile-toggle{display:flex;}
-    .mobile-menu{display:flex;}
-  }
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
 
-  /* ===== HERO ===== */
-  .hero{
-    position:relative;z-index:1;
-    padding:72px 0 0;
-  }
-  .hero-grid{
-    display:grid;grid-template-columns:1.05fr 0.95fr;gap:56px;align-items:start;
-  }
-  @media (max-width:900px){
-    .hero-grid{grid-template-columns:1fr;gap:40px;}
-  }
-  .eyebrow{
-    font-family:var(--font-mono);font-size:12px;color:var(--accent);
-    letter-spacing:0.12em;text-transform:uppercase;
-    display:flex;align-items:center;gap:8px;margin-bottom:18px;
-  }
-  .eyebrow .dot{
-    width:6px;height:6px;border-radius:50%;background:var(--accent);
-    animation:pulse-dot 2s ease-in-out infinite;
-  }
-  @keyframes pulse-dot{0%,100%{opacity:1;}50%{opacity:0.3;}}
+    ::selection {
+      background: var(--accent);
+      color: #06100E;
+    }
 
-  h1{
-    font-size:clamp(34px,4.6vw,54px);
-    line-height:1.06;
-    font-weight:700;
-    letter-spacing:-0.02em;
-    margin-bottom:20px;
-  }
-  h1 em{
-    font-style:normal;color:var(--accent);
-  }
-  .hero-sub{
-    font-size:16.5px;color:var(--text-dim);max-width:480px;margin-bottom:32px;
-  }
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+      border-radius: 2px;
+    }
 
-  .test-panel{
-    background:var(--panel);
-    border:1px solid var(--border);
-    border-radius:10px;
-    padding:22px;
-  }
-  .input-row{
-    display:flex;gap:10px;margin-bottom:14px;
-  }
-  @media (max-width:520px){.input-row{flex-direction:column;}}
-  .url-input{
-    flex:1;background:var(--bg-raised);border:1px solid var(--border);
-    border-radius:7px;padding:14px 16px;color:var(--text);
-    font-family:var(--font-mono);font-size:14.5px;
-    transition:border-color 0.15s;
-  }
-  .url-input::placeholder{color:var(--text-faint);}
-  .url-input:focus{border-color:var(--accent-dim);outline:none;}
-  .run-btn{
-    font-family:var(--font-mono);font-weight:700;font-size:13.5px;
-    background:var(--accent);color:#06100E;border:none;
-    border-radius:7px;padding:14px 24px;cursor:pointer;
-    white-space:nowrap;transition:transform 0.12s, box-shadow 0.12s, opacity 0.15s;
-    display:flex;align-items:center;gap:8px;justify-content:center;
-  }
-  .run-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 20px var(--accent-glow);}
-  .run-btn:disabled{opacity:0.55;cursor:not-allowed;}
-  .run-btn svg{width:14px;height:14px;}
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 32px;
+    }
 
-  .option-row{
-    display:flex;gap:18px;flex-wrap:wrap;align-items:center;
-    font-family:var(--font-mono);font-size:12.5px;color:var(--text-dim);
-    padding-top:4px;border-top:1px dashed var(--border-soft);margin-top:4px;
-  }
-  .option-row label{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;}
-  .option-row select{
-    background:var(--bg-raised);border:1px solid var(--border);color:var(--text);
-    font-family:var(--font-mono);font-size:12.5px;border-radius:5px;padding:5px 8px;
-    cursor:pointer;
-  }
-  .hint{font-size:11.5px;color:var(--text-faint);margin-top:12px;line-height:1.5;}
+    @media (max-width:640px) {
+      .wrap {
+        padding: 0 20px;
+      }
+    }
 
-  /* Oscilloscope */
-  .scope-wrap{
-    position:relative;
-    background:radial-gradient(circle at 50% 30%, rgba(94,230,209,0.06), transparent 70%), var(--bg-raised);
-    border:1px solid var(--border);border-radius:10px;
-    overflow:hidden;
-    aspect-ratio:4/3;
-  }
-  .scope-wrap canvas{display:block;width:100%;height:100%;}
-  .scope-label{
-    position:absolute;top:14px;left:16px;
-    font-family:var(--font-mono);font-size:11px;color:var(--text-faint);
-    letter-spacing:0.08em;text-transform:uppercase;
-  }
-  .scope-readout{
-    position:absolute;top:14px;right:16px;text-align:right;
-    font-family:var(--font-mono);
-  }
-  .scope-readout .big{font-size:22px;font-weight:700;color:var(--accent);line-height:1;}
-  .scope-readout .small{font-size:10.5px;color:var(--text-faint);letter-spacing:0.06em;}
-  .scope-status{
-    position:absolute;bottom:14px;left:16px;right:16px;
-    display:flex;justify-content:space-between;
-    font-family:var(--font-mono);font-size:11px;color:var(--text-faint);
-  }
-  .scope-status .live{color:var(--accent);display:flex;align-items:center;gap:6px;}
-  .scope-status .live .dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse-dot 1.4s ease-in-out infinite;}
+    .mono {
+      font-family: var(--font-mono);
+    }
 
-  /* ===== RESULTS ===== */
-  .results-section{padding:56px 0;display:none;}
-  .results-section.visible{display:block;}
-  .results-head{
-    display:flex;justify-content:space-between;align-items:baseline;
-    flex-wrap:wrap;gap:12px;margin-bottom:24px;
-    border-bottom:1px solid var(--border-soft);padding-bottom:18px;
-  }
-  .results-head h2{font-size:20px;font-weight:700;}
-  .results-head .target{font-family:var(--font-mono);color:var(--accent);font-size:14px;word-break:break-all;}
-  .verdict-badge{
-    font-family:var(--font-mono);font-size:12px;font-weight:700;
-    padding:6px 14px;border-radius:20px;letter-spacing:0.04em;text-transform:uppercase;
-    display:inline-flex;align-items:center;gap:6px;
-  }
-  .verdict-badge.good{background:rgba(94,230,209,0.12);color:var(--good);border:1px solid rgba(94,230,209,0.3);}
-  .verdict-badge.warn{background:rgba(245,199,107,0.12);color:var(--warn);border:1px solid rgba(245,199,107,0.3);}
-  .verdict-badge.fail{background:rgba(255,107,94,0.12);color:var(--fail);border:1px solid rgba(255,107,94,0.3);}
+    .dim {
+      color: var(--text-dim);
+    }
 
-  .metric-grid{
-    display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:32px;
-  }
-  @media (max-width:880px){.metric-grid{grid-template-columns:repeat(2,1fr);}}
-  @media (max-width:480px){.metric-grid{grid-template-columns:1fr;}}
-  .metric-card{
-    background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:18px;
-  }
-  .metric-card .label{
-    font-family:var(--font-mono);font-size:11px;color:var(--text-faint);
-    text-transform:uppercase;letter-spacing:0.07em;margin-bottom:10px;
-    display:flex;justify-content:space-between;align-items:center;
-  }
-  .metric-card .value{
-    font-family:var(--font-mono);font-size:30px;font-weight:700;line-height:1;
-    margin-bottom:4px;
-  }
-  .metric-card .sub{font-size:12px;color:var(--text-dim);}
-  .metric-card .unit{font-size:15px;color:var(--text-faint);font-weight:500;}
+    .faint {
+      color: var(--text-faint);
+    }
 
-  /* Stability strip */
-  .strip-section{
-    background:var(--panel);border:1px solid var(--border);border-radius:10px;
-    padding:22px;margin-bottom:24px;
-  }
-  .strip-head{
-    display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px;flex-wrap:wrap;gap:8px;
-  }
-  .strip-head h3{font-size:14px;font-weight:600;}
-  .strip-legend{display:flex;gap:14px;font-family:var(--font-mono);font-size:11px;color:var(--text-faint);flex-wrap:wrap;}
-  .strip-legend span{display:flex;align-items:center;gap:5px;}
-  .legend-swatch{width:8px;height:8px;border-radius:2px;display:inline-block;}
-  .stability-strip{
-    display:flex;gap:3px;align-items:flex-end;height:64px;
-    padding:8px 4px;border-radius:6px;background:var(--bg-raised);
-    overflow-x:auto;
-  }
-  .tick{
-    flex:1;min-width:6px;border-radius:2px 2px 0 0;
-    transition:height 0.4s cubic-bezier(.2,.8,.2,1), background 0.2s;
-    position:relative;cursor:default;
-  }
-  .tick:hover::after{
-    content:attr(data-tip);
-    position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
-    background:var(--bg-raised);border:1px solid var(--border);
-    font-family:var(--font-mono);font-size:10.5px;color:var(--text);
-    padding:4px 7px;border-radius:4px;white-space:nowrap;margin-bottom:5px;z-index:5;
-  }
-  .strip-axis{display:flex;justify-content:space-between;margin-top:6px;font-family:var(--font-mono);font-size:10.5px;color:var(--text-faint);}
+    /* ===== NAV ===== */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(11, 14, 17, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-soft);
+    }
 
-  /* Waterfall / timing breakdown */
-  .timing-bars{display:flex;flex-direction:column;gap:10px;}
-  .timing-row{display:grid;grid-template-columns:90px 1fr 64px;gap:12px;align-items:center;font-family:var(--font-mono);font-size:12px;}
-  .timing-row .t-label{color:var(--text-dim);}
-  .timing-track{height:8px;background:var(--bg-raised);border-radius:4px;overflow:hidden;position:relative;}
-  .timing-fill{height:100%;border-radius:4px;background:var(--accent);transition:width 0.6s cubic-bezier(.2,.8,.2,1);}
-  .timing-row .t-val{text-align:right;color:var(--text-dim);}
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 32px;
+      max-width: 1180px;
+      margin: 0 auto;
+    }
 
-  .detail-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:20px;}
-  @media (max-width:880px){.detail-grid{grid-template-columns:1fr;}}
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: -0.01em;
+    }
 
-  .runs-table{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:12.5px;}
-  .runs-table th{
-    text-align:left;color:var(--text-faint);font-weight:500;
-    text-transform:uppercase;font-size:10.5px;letter-spacing:0.05em;
-    padding:0 10px 10px;border-bottom:1px solid var(--border-soft);
-  }
-  .runs-table td{padding:9px 10px;border-bottom:1px solid var(--border-soft);color:var(--text-dim);}
-  .runs-table tr:last-child td{border-bottom:none;}
-  .status-pill{
-    font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:10px;
-    display:inline-block;
-  }
-  .status-pill.ok{background:rgba(94,230,209,0.12);color:var(--good);}
-  .status-pill.slow{background:rgba(245,199,107,0.12);color:var(--warn);}
-  .status-pill.err{background:rgba(255,107,94,0.12);color:var(--fail);}
+    .brand-mark {
+      width: 22px;
+      height: 22px;
+      position: relative;
+      flex-shrink: 0;
+    }
 
-  .progress-line{
-    font-family:var(--font-mono);font-size:12.5px;color:var(--text-dim);
-    margin-top:16px;min-height:18px;
-  }
-  .progress-line .cursor{color:var(--accent);animation:pulse-dot 1s steps(2) infinite;}
+    .brand-mark svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
 
-  /* ===== EXPLAIN SECTION ===== */
-  .section{padding:64px 0;position:relative;z-index:1;}
-  .section-head{max-width:600px;margin-bottom:40px;}
-  .section-head .eyebrow{margin-bottom:14px;}
-  .section-head h2{font-size:clamp(24px,3vw,32px);font-weight:700;letter-spacing:-0.01em;margin-bottom:12px;}
-  .section-head p{color:var(--text-dim);font-size:15px;}
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      align-items: center;
+    }
 
-  .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
-  @media (max-width:880px){.feature-grid{grid-template-columns:repeat(2,1fr);}}
-  @media (max-width:560px){.feature-grid{grid-template-columns:1fr;}}
-  .feature-card{
-    background:var(--panel);border:1px solid var(--border);border-radius:10px;
-    padding:24px;transition:border-color 0.2s, transform 0.2s;
-  }
-  .feature-card:hover{border-color:var(--accent-dim);transform:translateY(-2px);}
-  .feature-icon{
-    width:36px;height:36px;border-radius:8px;background:var(--accent-glow);
-    display:flex;align-items:center;justify-content:center;margin-bottom:16px;color:var(--accent);
-  }
-  .feature-icon svg{width:18px;height:18px;}
-  .feature-card h3{font-size:15.5px;font-weight:600;margin-bottom:8px;}
-  .feature-card p{font-size:13.5px;color:var(--text-dim);line-height:1.6;}
+    .nav-links a {
+      font-size: 14px;
+      color: var(--text-dim);
+      transition: color 0.15s;
+      font-family: var(--font-mono);
+    }
 
-  .how-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative;}
-  @media (max-width:880px){.how-steps{grid-template-columns:1fr;gap:24px;}}
-  .how-step{padding:0 20px 0 0;position:relative;}
-  .how-step:not(:last-child)::after{
-    content:'';position:absolute;top:18px;right:-10px;width:20px;height:1px;
-    background:var(--border);
-  }
-  @media (max-width:880px){.how-step:not(:last-child)::after{display:none;}}
-  .how-num{
-    font-family:var(--font-mono);font-size:12px;color:var(--accent);
-    width:36px;height:36px;border:1px solid var(--accent-dim);border-radius:50%;
-    display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-weight:700;
-  }
-  .how-step h4{font-size:14.5px;font-weight:600;margin-bottom:6px;}
-  .how-step p{font-size:13px;color:var(--text-dim);line-height:1.55;}
+    .nav-links a:hover {
+      color: var(--text);
+    }
 
-  .method-note{
-    background:var(--panel-2);border:1px solid var(--border);border-left:3px solid var(--accent-dim);
-    border-radius:0 8px 8px 0;padding:20px 22px;font-size:13.5px;color:var(--text-dim);line-height:1.65;
-  }
-  .method-note strong{color:var(--text);}
+    .nav-cta {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 600;
+      background: var(--accent);
+      color: #06100E;
+      padding: 9px 18px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
 
-  /* FAQ */
-  .faq-item{border-bottom:1px solid var(--border-soft);}
-  .faq-q{
-    padding:18px 0;display:flex;justify-content:space-between;align-items:center;
-    cursor:pointer;font-weight:600;font-size:14.5px;gap:16px;
-  }
-  .faq-q svg{flex-shrink:0;width:16px;height:16px;color:var(--text-faint);transition:transform 0.2s;}
-  .faq-item.open .faq-q svg{transform:rotate(45deg);}
-  .faq-a{
-    max-height:0;overflow:hidden;transition:max-height 0.25s ease;
-    font-size:13.5px;color:var(--text-dim);line-height:1.65;
-  }
-  .faq-item.open .faq-a{max-height:300px;}
-  .faq-a-inner{padding-bottom:18px;max-width:680px;}
+    .nav-cta:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px var(--accent-glow);
+    }
 
-  footer{
-    border-top:1px solid var(--border-soft);padding:36px 0 28px;position:relative;z-index:1;
-  }
-  .footer-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
-  .footer-row-bottom{
-    margin-top:24px;padding-top:20px;border-top:1px solid var(--border-soft);
-  }
-  .footer-links{display:flex;gap:24px;font-family:var(--font-mono);font-size:12.5px;color:var(--text-faint);}
-  .footer-links a:hover{color:var(--text-dim);}
-  .footer-legal{gap:20px;}
-  .footer-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14px;}
-  .footer-brand .brand-mark{width:18px;height:18px;}
-  .footer-copy{font-size:12px;color:var(--text-faint);}
-  @media (max-width:560px){
-    .footer-row-bottom{flex-direction:column;align-items:flex-start;gap:14px;}
-    .footer-legal{gap:16px;flex-wrap:wrap;}
-  }
+    .nav-mobile-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      padding: 4px;
+      align-items: center;
+    }
 
-  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);}
+    .mobile-menu {
+      display: none;
+      flex-direction: column;
+      border-top: 1px solid var(--border-soft);
+      background: var(--bg-raised);
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.25s ease;
+    }
 
-  @media (prefers-reduced-motion:reduce){
-    *{animation-duration:0.01ms !important;transition-duration:0.01ms !important;}
-  }
+    .mobile-menu.open {
+      max-height: 220px;
+    }
+
+    .mobile-menu a {
+      padding: 16px 32px;
+      font-family: var(--font-mono);
+      font-size: 14px;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .mobile-menu a:active {
+      color: var(--accent);
+    }
+
+    @media (max-width:780px) {
+      .nav-links {
+        display: none;
+      }
+
+      .nav-mobile-toggle {
+        display: flex;
+      }
+
+      .mobile-menu {
+        display: flex;
+      }
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      position: relative;
+      z-index: 1;
+      padding: 72px 0 0;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 56px;
+      align-items: start;
+    }
+
+    @media (max-width:900px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+    }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--accent);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.3;
+      }
+    }
+
+    h1 {
+      font-size: clamp(34px, 4.6vw, 54px);
+      line-height: 1.06;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
+    }
+
+    h1 em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .hero-sub {
+      font-size: 16.5px;
+      color: var(--text-dim);
+      max-width: 480px;
+      margin-bottom: 32px;
+    }
+
+    .test-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 22px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    @media (max-width:520px) {
+      .input-row {
+        flex-direction: column;
+      }
+    }
+
+    .url-input {
+      flex: 1;
+      background: var(--bg-raised);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 14px 16px;
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 14.5px;
+      transition: border-color 0.15s;
+    }
+
+    .url-input::placeholder {
+      color: var(--text-faint);
+    }
+
+    .url-input:focus {
+      border-color: var(--accent-dim);
+      outline: none;
+    }
+
+    .run-btn {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 13.5px;
+      background: var(--accent);
+      color: #06100E;
+      border: none;
+      border-radius: 7px;
+      padding: 14px 24px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.12s, box-shadow 0.12s, opacity 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .run-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px var(--accent-glow);
+    }
+
+    .run-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .run-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .option-row {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--text-dim);
+      padding-top: 4px;
+      border-top: 1px dashed var(--border-soft);
+      margin-top: 4px;
+    }
+
+    .option-row label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .option-row select {
+      background: var(--bg-raised);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      border-radius: 5px;
+      padding: 5px 8px;
+      cursor: pointer;
+    }
+
+    .hint {
+      font-size: 11.5px;
+      color: var(--text-faint);
+      margin-top: 12px;
+      line-height: 1.5;
+    }
+
+    /* Oscilloscope */
+    .scope-wrap {
+      position: relative;
+      background: radial-gradient(circle at 50% 30%, rgba(94, 230, 209, 0.06), transparent 70%), var(--bg-raised);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      aspect-ratio: 4/3;
+    }
+
+    .scope-wrap canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .scope-label {
+      position: absolute;
+      top: 14px;
+      left: 16px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-faint);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .scope-readout {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      text-align: right;
+      font-family: var(--font-mono);
+    }
+
+    .scope-readout .big {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .scope-readout .small {
+      font-size: 10.5px;
+      color: var(--text-faint);
+      letter-spacing: 0.06em;
+    }
+
+    .scope-status {
+      position: absolute;
+      bottom: 14px;
+      left: 16px;
+      right: 16px;
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-faint);
+    }
+
+    .scope-status .live {
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .scope-status .live .dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse-dot 1.4s ease-in-out infinite;
+    }
+
+    /* ===== RESULTS ===== */
+    .results-section {
+      padding: 56px 0;
+      display: none;
+    }
+
+    .results-section.visible {
+      display: block;
+    }
+
+    .results-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border-soft);
+      padding-bottom: 18px;
+    }
+
+    .results-head h2 {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .results-head .target {
+      font-family: var(--font-mono);
+      color: var(--accent);
+      font-size: 14px;
+      word-break: break-all;
+    }
+
+    .verdict-badge {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 20px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .verdict-badge.good {
+      background: rgba(94, 230, 209, 0.12);
+      color: var(--good);
+      border: 1px solid rgba(94, 230, 209, 0.3);
+    }
+
+    .verdict-badge.warn {
+      background: rgba(245, 199, 107, 0.12);
+      color: var(--warn);
+      border: 1px solid rgba(245, 199, 107, 0.3);
+    }
+
+    .verdict-badge.fail {
+      background: rgba(255, 107, 94, 0.12);
+      color: var(--fail);
+      border: 1px solid rgba(255, 107, 94, 0.3);
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+
+    @media (max-width:880px) {
+      .metric-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width:480px) {
+      .metric-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .metric-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 18px;
+    }
+
+    .metric-card .label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .metric-card .value {
+      font-family: var(--font-mono);
+      font-size: 30px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .metric-card .sub {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .metric-card .unit {
+      font-size: 15px;
+      color: var(--text-faint);
+      font-weight: 500;
+    }
+
+    /* Stability strip */
+    .strip-section {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 22px;
+      margin-bottom: 24px;
+    }
+
+    .strip-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .strip-head h3 {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .strip-legend {
+      display: flex;
+      gap: 14px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-faint);
+      flex-wrap: wrap;
+    }
+
+    .strip-legend span {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .legend-swatch {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+
+    .stability-strip {
+      display: flex;
+      gap: 3px;
+      align-items: flex-end;
+      height: 64px;
+      padding: 8px 4px;
+      border-radius: 6px;
+      background: var(--bg-raised);
+      overflow-x: auto;
+    }
+
+    .tick {
+      flex: 1;
+      min-width: 6px;
+      border-radius: 2px 2px 0 0;
+      transition: height 0.4s cubic-bezier(.2, .8, .2, 1), background 0.2s;
+      position: relative;
+      cursor: default;
+    }
+
+    .tick:hover::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-raised);
+      border: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--text);
+      padding: 4px 7px;
+      border-radius: 4px;
+      white-space: nowrap;
+      margin-bottom: 5px;
+      z-index: 5;
+    }
+
+    .strip-axis {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--text-faint);
+    }
+
+    /* Waterfall / timing breakdown */
+    .timing-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .timing-row {
+      display: grid;
+      grid-template-columns: 90px 1fr 64px;
+      gap: 12px;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+
+    .timing-row .t-label {
+      color: var(--text-dim);
+    }
+
+    .timing-track {
+      height: 8px;
+      background: var(--bg-raised);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .timing-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: var(--accent);
+      transition: width 0.6s cubic-bezier(.2, .8, .2, 1);
+    }
+
+    .timing-row .t-val {
+      text-align: right;
+      color: var(--text-dim);
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width:880px) {
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .runs-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+    }
+
+    .runs-table th {
+      text-align: left;
+      color: var(--text-faint);
+      font-weight: 500;
+      text-transform: uppercase;
+      font-size: 10.5px;
+      letter-spacing: 0.05em;
+      padding: 0 10px 10px;
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .runs-table td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--border-soft);
+      color: var(--text-dim);
+    }
+
+    .runs-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .status-pill {
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 10px;
+      display: inline-block;
+    }
+
+    .status-pill.ok {
+      background: rgba(94, 230, 209, 0.12);
+      color: var(--good);
+    }
+
+    .status-pill.slow {
+      background: rgba(245, 199, 107, 0.12);
+      color: var(--warn);
+    }
+
+    .status-pill.err {
+      background: rgba(255, 107, 94, 0.12);
+      color: var(--fail);
+    }
+
+    .progress-line {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--text-dim);
+      margin-top: 16px;
+      min-height: 18px;
+    }
+
+    .progress-line .cursor {
+      color: var(--accent);
+      animation: pulse-dot 1s steps(2) infinite;
+    }
+
+    /* ===== EXPLAIN SECTION ===== */
+    .section {
+      padding: 64px 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .section-head {
+      max-width: 600px;
+      margin-bottom: 40px;
+    }
+
+    .section-head .eyebrow {
+      margin-bottom: 14px;
+    }
+
+    .section-head h2 {
+      font-size: clamp(24px, 3vw, 32px);
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 12px;
+    }
+
+    .section-head p {
+      color: var(--text-dim);
+      font-size: 15px;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    @media (max-width:880px) {
+      .feature-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width:560px) {
+      .feature-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .feature-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .feature-card:hover {
+      border-color: var(--accent-dim);
+      transform: translateY(-2px);
+    }
+
+    .feature-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--accent-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      color: var(--accent);
+    }
+
+    .feature-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .feature-card h3 {
+      font-size: 15.5px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .feature-card p {
+      font-size: 13.5px;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+
+    .how-steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      position: relative;
+    }
+
+    @media (max-width:880px) {
+      .how-steps {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+    }
+
+    .how-step {
+      padding: 0 20px 0 0;
+      position: relative;
+    }
+
+    .how-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 18px;
+      right: -10px;
+      width: 20px;
+      height: 1px;
+      background: var(--border);
+    }
+
+    @media (max-width:880px) {
+      .how-step:not(:last-child)::after {
+        display: none;
+      }
+    }
+
+    .how-num {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--accent);
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--accent-dim);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      font-weight: 700;
+    }
+
+    .how-step h4 {
+      font-size: 14.5px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .how-step p {
+      font-size: 13px;
+      color: var(--text-dim);
+      line-height: 1.55;
+    }
+
+    .method-note {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent-dim);
+      border-radius: 0 8px 8px 0;
+      padding: 20px 22px;
+      font-size: 13.5px;
+      color: var(--text-dim);
+      line-height: 1.65;
+    }
+
+    .method-note strong {
+      color: var(--text);
+    }
+
+    /* FAQ */
+    .faq-item {
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .faq-q {
+      padding: 18px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14.5px;
+      gap: 16px;
+    }
+
+    .faq-q svg {
+      flex-shrink: 0;
+      width: 16px;
+      height: 16px;
+      color: var(--text-faint);
+      transition: transform 0.2s;
+    }
+
+    .faq-item.open .faq-q svg {
+      transform: rotate(45deg);
+    }
+
+    .faq-a {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.25s ease;
+      font-size: 13.5px;
+      color: var(--text-dim);
+      line-height: 1.65;
+    }
+
+    .faq-item.open .faq-a {
+      max-height: 300px;
+    }
+
+    .faq-a-inner {
+      padding-bottom: 18px;
+      max-width: 680px;
+    }
+
+    footer {
+      border-top: 1px solid var(--border-soft);
+      padding: 36px 0 28px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .footer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-row-bottom {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-soft);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--text-faint);
+    }
+
+    .footer-links a:hover {
+      color: var(--text-dim);
+    }
+
+    .footer-legal {
+      gap: 20px;
+    }
+
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .footer-brand .brand-mark {
+      width: 18px;
+      height: 18px;
+    }
+
+    .footer-copy {
+      font-size: 12px;
+      color: var(--text-faint);
+    }
+
+    @media (max-width:560px) {
+      .footer-row-bottom {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+      }
+
+      .footer-legal {
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+    }
+
+    @media (prefers-reduced-motion:reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
 
 
-/* ===== ABOUT / CONTACT / PRIVACY PAGE-SECTION STYLES ===== */
-/* Page-specific styles for About / Contact / Privacy — extends shared.css */
+    /* ===== ABOUT / CONTACT / PRIVACY PAGE-SECTION STYLES ===== */
+    /* Page-specific styles for About / Contact / Privacy — extends shared.css */
 
-.page-hero{
-  padding:64px 0 8px;position:relative;z-index:1;
-}
-.page-hero .eyebrow{margin-bottom:16px;}
-.page-hero h1{
-  font-size:clamp(30px,4vw,44px);
-  line-height:1.08;font-weight:700;letter-spacing:-0.02em;margin-bottom:14px;
-}
-.page-hero .page-sub{font-size:16px;color:var(--text-dim);max-width:560px;}
+    .page-hero {
+      padding: 64px 0 8px;
+      position: relative;
+      z-index: 1;
+    }
 
-.content-section{padding:40px 0 64px;position:relative;z-index:1;}
-.prose{max-width:700px;}
-.prose p{font-size:15px;color:var(--text-dim);line-height:1.75;margin-bottom:18px;}
-.prose h2{
-  font-size:19px;font-weight:700;color:var(--text);
-  margin:40px 0 14px;letter-spacing:-0.01em;
-}
-.prose h2:first-child{margin-top:0;}
-.prose ul{margin:0 0 18px 0;padding-left:20px;color:var(--text-dim);font-size:15px;line-height:1.75;}
-.prose li{margin-bottom:8px;}
-.prose a{color:var(--accent);border-bottom:1px solid var(--accent-dim);}
-.prose a:hover{color:var(--text);}
-.prose strong{color:var(--text);font-weight:600;}
-.prose .updated-tag{
-  display:inline-block;font-family:var(--font-mono);font-size:11.5px;color:var(--text-faint);
-  background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:5px 12px;
-  margin-bottom:28px;
-}
+    .page-hero .eyebrow {
+      margin-bottom: 16px;
+    }
 
-/* About page */
-.about-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:start;}
-@media (max-width:880px){.about-grid{grid-template-columns:1fr;gap:32px;}}
-.principle-list{display:flex;flex-direction:column;gap:0;}
-.principle-item{
-  padding:18px 0;border-bottom:1px solid var(--border-soft);
-}
-.principle-item:first-child{padding-top:0;}
-.principle-item .p-num{
-  font-family:var(--font-mono);font-size:12px;color:var(--accent);margin-bottom:8px;display:block;
-}
-.principle-item h3{font-size:14.5px;font-weight:600;margin-bottom:6px;}
-.principle-item p{font-size:13.5px;color:var(--text-dim);line-height:1.6;margin:0;}
+    .page-hero h1 {
+      font-size: clamp(30px, 4vw, 44px);
+      line-height: 1.08;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 14px;
+    }
 
-.stat-card{
-  background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:22px;
-}
-.stat-card + .stat-card{margin-top:14px;}
-.stat-card .stat-label{
-  font-family:var(--font-mono);font-size:11px;color:var(--text-faint);
-  text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;
-}
-.stat-card .stat-value{font-family:var(--font-mono);font-size:26px;font-weight:700;color:var(--accent);margin-bottom:6px;}
-.stat-card .stat-sub{font-size:13px;color:var(--text-dim);line-height:1.5;}
+    .page-hero .page-sub {
+      font-size: 16px;
+      color: var(--text-dim);
+      max-width: 560px;
+    }
 
-/* Contact page */
-.contact-grid{display:grid;grid-template-columns:1fr 0.85fr;gap:40px;align-items:start;}
-@media (max-width:880px){.contact-grid{grid-template-columns:1fr;gap:32px;}}
+    .content-section {
+      padding: 40px 0 64px;
+      position: relative;
+      z-index: 1;
+    }
 
-.contact-form{
-  background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:26px;
-}
-.form-row{margin-bottom:18px;}
-.form-row:last-child{margin-bottom:0;}
-.form-row label{
-  display:block;font-family:var(--font-mono);font-size:12px;color:var(--text-dim);
-  margin-bottom:8px;letter-spacing:0.02em;
-}
-.form-row input,
-.form-row select,
-.form-row textarea{
-  width:100%;background:var(--bg-raised);border:1px solid var(--border);
-  border-radius:7px;padding:12px 14px;color:var(--text);
-  font-family:var(--font-body);font-size:14px;
-  transition:border-color 0.15s;
-}
-.form-row textarea{resize:vertical;min-height:120px;font-family:var(--font-body);}
-.form-row input:focus,
-.form-row select:focus,
-.form-row textarea:focus{border-color:var(--accent-dim);outline:none;}
-.form-row input::placeholder,
-.form-row textarea::placeholder{color:var(--text-faint);}
-.form-submit{
-  font-family:var(--font-mono);font-weight:700;font-size:13.5px;
-  background:var(--accent);color:#06100E;border:none;
-  border-radius:7px;padding:14px 26px;cursor:pointer;
-  width:100%;transition:transform 0.12s, box-shadow 0.12s;
-}
-.form-submit:hover{transform:translateY(-1px);box-shadow:0 6px 20px var(--accent-glow);}
-.form-note{font-size:11.5px;color:var(--text-faint);margin-top:14px;line-height:1.5;}
-.form-success{
-  display:none;background:rgba(94,230,209,0.1);border:1px solid rgba(94,230,209,0.3);
-  border-radius:8px;padding:16px;font-size:13.5px;color:var(--good);margin-top:16px;
-}
-.form-success.visible{display:block;}
+    .prose {
+      max-width: 700px;
+    }
 
-.contact-channels{display:flex;flex-direction:column;gap:14px;}
-.channel-card{
-  background:var(--panel-2);border:1px solid var(--border);border-radius:10px;padding:20px;
-}
-.channel-card .ch-label{
-  font-family:var(--font-mono);font-size:11px;color:var(--text-faint);
-  text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;
-}
-.channel-card .ch-value{font-size:14.5px;font-weight:600;margin-bottom:4px;}
-.channel-card .ch-value a{color:var(--accent);}
-.channel-card .ch-sub{font-size:12.5px;color:var(--text-dim);line-height:1.5;}
+    .prose p {
+      font-size: 15px;
+      color: var(--text-dim);
+      line-height: 1.75;
+      margin-bottom: 18px;
+    }
 
-/* shared simple back-to-top link, used within in-page sections */
-.back-link{
-  display:inline-flex;align-items:center;gap:6px;
-  font-family:var(--font-mono);font-size:12.5px;color:var(--text-faint);
-  margin-bottom:20px;transition:color 0.15s;
-}
-.back-link:hover{color:var(--accent);}
-.back-link svg{width:13px;height:13px;}
+    .prose h2 {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 40px 0 14px;
+      letter-spacing: -0.01em;
+    }
 
-/* divider used between major in-page sections like About / Contact / Privacy */
-.page-section-divider{
-  border-top:1px solid var(--border-soft);
-}
+    .prose h2:first-child {
+      margin-top: 0;
+    }
 
-</style>
+    .prose ul {
+      margin: 0 0 18px 0;
+      padding-left: 20px;
+      color: var(--text-dim);
+      font-size: 15px;
+      line-height: 1.75;
+    }
+
+    .prose li {
+      margin-bottom: 8px;
+    }
+
+    .prose a {
+      color: var(--accent);
+      border-bottom: 1px solid var(--accent-dim);
+    }
+
+    .prose a:hover {
+      color: var(--text);
+    }
+
+    .prose strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .prose .updated-tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--text-faint);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 12px;
+      margin-bottom: 28px;
+    }
+
+    /* About page */
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+
+    @media (max-width:880px) {
+      .about-grid {
+        grid-template-columns: 1fr;
+        gap: 32px;
+      }
+    }
+
+    .principle-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .principle-item {
+      padding: 18px 0;
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .principle-item:first-child {
+      padding-top: 0;
+    }
+
+    .principle-item .p-num {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--accent);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .principle-item h3 {
+      font-size: 14.5px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .principle-item p {
+      font-size: 13.5px;
+      color: var(--text-dim);
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .stat-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 22px;
+    }
+
+    .stat-card+.stat-card {
+      margin-top: 14px;
+    }
+
+    .stat-card .stat-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+
+    .stat-card .stat-value {
+      font-family: var(--font-mono);
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .stat-card .stat-sub {
+      font-size: 13px;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    /* Contact page */
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 0.85fr;
+      gap: 40px;
+      align-items: start;
+    }
+
+    @media (max-width:880px) {
+      .contact-grid {
+        grid-template-columns: 1fr;
+        gap: 32px;
+      }
+    }
+
+    .contact-form {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 26px;
+    }
+
+    .form-row {
+      margin-bottom: 18px;
+    }
+
+    .form-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-row label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+      letter-spacing: 0.02em;
+    }
+
+    .form-row input,
+    .form-row select,
+    .form-row textarea {
+      width: 100%;
+      background: var(--bg-raised);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 12px 14px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 14px;
+      transition: border-color 0.15s;
+    }
+
+    .form-row textarea {
+      resize: vertical;
+      min-height: 120px;
+      font-family: var(--font-body);
+    }
+
+    .form-row input:focus,
+    .form-row select:focus,
+    .form-row textarea:focus {
+      border-color: var(--accent-dim);
+      outline: none;
+    }
+
+    .form-row input::placeholder,
+    .form-row textarea::placeholder {
+      color: var(--text-faint);
+    }
+
+    .form-submit {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 13.5px;
+      background: var(--accent);
+      color: #06100E;
+      border: none;
+      border-radius: 7px;
+      padding: 14px 26px;
+      cursor: pointer;
+      width: 100%;
+      transition: transform 0.12s, box-shadow 0.12s;
+    }
+
+    .form-submit:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px var(--accent-glow);
+    }
+
+    .form-note {
+      font-size: 11.5px;
+      color: var(--text-faint);
+      margin-top: 14px;
+      line-height: 1.5;
+    }
+
+    .form-success {
+      display: none;
+      background: rgba(94, 230, 209, 0.1);
+      border: 1px solid rgba(94, 230, 209, 0.3);
+      border-radius: 8px;
+      padding: 16px;
+      font-size: 13.5px;
+      color: var(--good);
+      margin-top: 16px;
+    }
+
+    .form-success.visible {
+      display: block;
+    }
+
+    .contact-channels {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .channel-card {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+    }
+
+    .channel-card .ch-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+
+    .channel-card .ch-value {
+      font-size: 14.5px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .channel-card .ch-value a {
+      color: var(--accent);
+    }
+
+    .channel-card .ch-sub {
+      font-size: 12.5px;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    /* shared simple back-to-top link, used within in-page sections */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--text-faint);
+      margin-bottom: 20px;
+      transition: color 0.15s;
+    }
+
+    .back-link:hover {
+      color: var(--accent);
+    }
+
+    .back-link svg {
+      width: 13px;
+      height: 13px;
+    }
+
+    /* divider used between major in-page sections like About / Contact / Privacy */
+    .page-section-divider {
+      border-top: 1px solid var(--border-soft);
+    }
+  </style>
 </head>
+
 <body>
 
-<div id="top"></div>
-<header>
-  <nav>
-    <div class="brand">
-      <span class="brand-mark">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M2 12h4l2.5-7 5 17 3-10h5.5" stroke="#5EE6D1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </span>
-      Pulsewidth
-    </div>
-    <div class="nav-links">
-      <a href="#test">Run a test</a>
-      <a href="#method">Methodology</a>
-      <a href="#faq">FAQ</a>
-    </div>
-    <button class="nav-cta" id="navRunBtn">Test a site</button>
-    <button class="nav-mobile-toggle" id="navMobileToggle" aria-label="Open menu" aria-expanded="false">
-      <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-    </button>
-  </nav>
-  <div class="mobile-menu" id="mobileMenu">
-    <a href="#test">Run a test</a>
-    <a href="#method">Methodology</a>
-    <a href="#faq">FAQ</a>
-  </div>
-</header>
-
-<section class="hero" id="test">
-  <div class="wrap">
-    <div class="hero-grid">
-      <div>
-        <div class="eyebrow"><span class="dot"></span> Runs live, in your browser</div>
-        <h1>See how a website<br>actually <em>behaves</em>,<br>not how it's supposed to.</h1>
-        <p class="hero-sub">Paste a URL. We fire real requests from your browser, time every one, and chart how consistent the response stays — load speed, time to first byte, and stability under repetition.</p>
-
-        <div class="test-panel">
-          <div class="input-row">
-            <input type="url" class="url-input" id="urlInput" placeholder="https://example.com" autocomplete="off" spellcheck="false" aria-label="Website URL to test">
-            <button class="run-btn" id="runBtn">
-              <svg viewBox="0 0 24 24" fill="none"><path d="M5 3l14 9-14 9V3z" fill="currentColor"/></svg>
-              Run benchmark
-            </button>
-          </div>
-          <div class="option-row">
-            <label><input type="checkbox" id="optPings" checked style="accent-color:var(--accent)"> 12 sequential pings</label>
-            <span>Probe depth:</span>
-            <select id="optDepth">
-              <option value="6">Quick (6 pings)</option>
-              <option value="12" selected>Standard (12 pings)</option>
-              <option value="24">Thorough (24 pings)</option>
-            </select>
-          </div>
-          <div class="hint" id="heroHint">Test runs entirely client-side. Some sites block cross-origin timing detail (CORS) — when that happens, we fall back to total round-trip time and tell you plainly.</div>
-        </div>
-      </div>
-
-      <div class="scope-wrap" id="scopeWrap">
-        <span class="scope-label">Latency trace</span>
-        <div class="scope-readout">
-          <div class="big mono" id="scopeBig">— ms</div>
-          <div class="small mono" id="scopeSmall">awaiting input</div>
-        </div>
-        <canvas id="scopeCanvas"></canvas>
-        <div class="scope-status">
-          <span id="scopeStatusLeft">idle</span>
-          <span class="live" id="scopeLive" style="display:none;"><span class="dot"></span> live</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="results-section" id="resultsSection">
-  <div class="wrap">
-    <div class="results-head">
-      <div>
-        <h2>Benchmark results</h2>
-        <div class="target mono" id="resultTarget">—</div>
-      </div>
-      <div class="verdict-badge" id="verdictBadge">—</div>
-    </div>
-
-    <div class="progress-line" id="progressLine" aria-live="polite"></div>
-
-    <div class="metric-grid" id="metricGrid">
-      <div class="metric-card">
-        <div class="label">Median response<span class="faint" title="Time to first byte (or full round trip if CORS blocks detail)">ⓘ</span></div>
-        <div class="value" id="mMedian">—<span class="unit"> ms</span></div>
-        <div class="sub" id="mMedianSub">waiting for data</div>
-      </div>
-      <div class="metric-card">
-        <div class="label">Fastest / Slowest</div>
-        <div class="value" id="mRange">— / —</div>
-        <div class="sub" id="mRangeSub">ms, across all pings</div>
-      </div>
-      <div class="metric-card">
-        <div class="label">Jitter (stability)</div>
-        <div class="value" id="mJitter">—<span class="unit"> ms</span></div>
-        <div class="sub" id="mJitterSub">standard deviation</div>
-      </div>
-      <div class="metric-card">
-        <div class="label">Success rate</div>
-        <div class="value" id="mSuccess">—<span class="unit">%</span></div>
-        <div class="sub" id="mSuccessSub">requests completed</div>
-      </div>
-    </div>
-
-    <div class="strip-section">
-      <div class="strip-head">
-        <h3>Stability strip — one tick per request, in order</h3>
-        <div class="strip-legend">
-          <span><span class="legend-swatch" style="background:var(--good)"></span> fast</span>
-          <span><span class="legend-swatch" style="background:var(--warn)"></span> slow</span>
-          <span><span class="legend-swatch" style="background:var(--fail)"></span> failed</span>
-        </div>
-      </div>
-      <div class="stability-strip" id="stabilityStrip"></div>
-      <div class="strip-axis"><span>ping 1</span><span id="stripAxisEnd">ping 12</span></div>
-    </div>
-
-    <div class="detail-grid">
-      <div class="strip-section">
-        <div class="strip-head"><h3>Response timing breakdown</h3></div>
-        <div class="timing-bars" id="timingBars"></div>
-        <div class="method-note" id="timingNote" style="margin-top:18px;">Measuring…</div>
-      </div>
-      <div class="strip-section">
-        <div class="strip-head"><h3>Raw request log</h3></div>
-        <div style="max-height:280px;overflow-y:auto;">
-          <table class="runs-table">
-            <thead><tr><th>#</th><th>Latency</th><th>Status</th></tr></thead>
-            <tbody id="runsTableBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="section" id="features">
-  <div class="wrap">
-    <div class="section-head">
-      <div class="eyebrow">What it checks</div>
-      <h2>Three signals, one verdict</h2>
-      <p>Speed alone doesn't tell you if a site holds up. We look at how fast, how consistent, and how reliably it responds — because a server that's fast once and times out the next is worse than one that's steadily mediocre.</p>
-    </div>
-    <div class="feature-grid">
-      <div class="feature-card">
-        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2v4M12 18v4M2 12h4M18 12h4M12 8a4 4 0 100 8 4 4 0 000-8z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
-        <h3>Response speed</h3>
-        <p>Time to first byte and total round trip, measured directly by your browser's network stack — not a third-party estimate.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M3 17l5-5 4 4 8-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <h3>Stability under repetition</h3>
-        <p>We send a run of consecutive requests and chart the spread. A server that swings wildly between fast and slow shows up immediately on the strip.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
-        <h3>Availability</h3>
-        <p>Every failed, timed-out, or non-2xx response counts against the success rate, so an unreliable host can't hide behind a good average.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="section" id="method" style="background:var(--bg-raised);">
-  <div class="wrap">
-    <div class="section-head">
-      <div class="eyebrow">How it works</div>
-      <h2>No server in the middle</h2>
-      <p>Most "speed test" tools route your request through their own infrastructure first. This one doesn't — your browser talks to the target directly, so the numbers reflect what your visit would actually feel like.</p>
-    </div>
-    <div class="how-steps">
-      <div class="how-step">
-        <div class="how-num">1</div>
-        <h4>You enter a URL</h4>
-        <p>No account, no install. The address bar is the whole interface.</p>
-      </div>
-      <div class="how-step">
-        <div class="how-num">2</div>
-        <h4>Your browser fires the requests</h4>
-        <p>A sequence of real HTTP requests goes out from your machine, timed with the browser's native Performance API.</p>
-      </div>
-      <div class="how-step">
-        <div class="how-num">3</div>
-        <h4>We plot every result</h4>
-        <p>Each ping lands on the stability strip as it completes — pass, slow, or failed — building the picture live.</p>
-      </div>
-      <div class="how-step">
-        <div class="how-num">4</div>
-        <h4>You get a plain verdict</h4>
-        <p>Median speed, jitter, and success rate roll up into one of three calls: solid, shaky, or unreliable.</p>
-      </div>
-    </div>
-
-    <div class="method-note" style="margin-top:36px;">
-      <strong>Why the numbers can differ from other tools:</strong> services like WebPageTest run from dedicated lab machines on controlled networks and can read deep browser-internal timing because they load the page in a full instrumented browser they control. A page tested from your own browser is bound by the same-origin policy — most sites don't send the CORS headers that would let us see DNS, TCP, and TLS time separately for a cross-origin request. When that detail isn't available, we measure total elapsed time end-to-end instead and say so plainly, rather than inventing a breakdown we can't actually see.
-    </div>
-  </div>
-</section>
-
-<section class="section" id="faq">
-  <div class="wrap">
-    <div class="section-head">
-      <div class="eyebrow">Questions</div>
-      <h2>Before you ask</h2>
-    </div>
-    <div id="faqList" style="max-width:760px;"></div>
-  </div>
-</section>
-
-<section class="page-section-divider" id="about">
-  <div class="wrap page-hero">
-    <a href="#top" class="back-link">
-      <svg viewBox="0 0 24 24" fill="none"><path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Back to top
-    </a>
-    <div class="eyebrow"><span class="dot"></span> About</div>
-    <h1>A meter, not a marketing claim.</h1>
-    <p class="page-sub">Pulsewidth exists because most "is this site fast?" tools answer a question nobody asked, from a vantage point nobody visits from. Here's what we're actually trying to do instead.</p>
-  </div>
-  <div class="wrap content-section">
-    <div class="about-grid">
-      <div class="prose">
-        <h2>Why this exists</h2>
-        <p>Most performance dashboards are built to make a number go up — a Lighthouse score, a synthetic grade, a badge you can put in a README. Those numbers are useful for what they measure, but they're measured from a lab: a fixed data center, a controlled network, a browser instrumented in ways your actual visitors' browsers never are.</p>
-        <p>Pulsewidth measures something narrower and, we think, more honest: <strong>what happens when your own browser, on your own connection, asks a server for a page — twelve times in a row.</strong> No lab. No synthetic throttling profile standing in for a real network. Just repeated, real requests, timed plainly.</p>
-
-        <h2>What "benchmark" means here</h2>
-        <p>We don't grade sites against an industry curve or assign letter grades. A benchmark, to us, just means: here is the same test, run the same way, every time — so you can compare a site against itself over time, or compare two sites under the same conditions, without us deciding what "good" means on your behalf.</p>
-        <p>The verdict labels — <strong>Solid, Shaky, Unreliable, Unreachable</strong> — are deliberately plain. They roll up median speed, consistency (jitter), and success rate into one read, but the underlying numbers are always shown too, so you're never just trusting our adjective.</p>
-
-        <h2>What we won't pretend to do</h2>
-        <p>Browsers enforce a security boundary called the same-origin policy. It means a page running in your browser can't always see the fine-grained timing breakdown (DNS time, TCP handshake, TLS negotiation) for a site it doesn't control — that detail is only exposed when the target site explicitly opts in via CORS headers, and most don't.</p>
-        <p>When that detail isn't available, we say so directly in the results rather than inventing numbers that look precise but aren't real. We'd rather hand you an honest "we can't see that part" than a confident-looking chart built on a guess.</p>
-
-        <h2>Who built this</h2>
-        <p>Pulsewidth is an independent project, built and maintained by <strong>Kailash Rao Shivaji</strong>. It's part of a small set of self-directed tools and learning projects rather than a venture-backed product — which is also why it has no tracking, no accounts, and no plan to ever require either.</p>
-      </div>
-
-      <div>
-        <div class="stat-card">
-          <div class="stat-label">Runs from</div>
-          <div class="stat-value">Your browser</div>
-          <div class="stat-sub">Not a lab server. The numbers reflect your actual network path to the target.</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Data retained</div>
-          <div class="stat-value">None</div>
-          <div class="stat-sub">Tests aren't logged, stored, or sent anywhere. Closing the tab clears everything.</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Signals measured</div>
-          <div class="stat-value">3</div>
-          <div class="stat-sub">Response speed, stability across repeated pings, and request success rate.</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="page-section-divider" id="contact">
-  <div class="wrap page-hero">
-    <a href="#top" class="back-link">
-      <svg viewBox="0 0 24 24" fill="none"><path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Back to top
-    </a>
-    <div class="eyebrow"><span class="dot"></span> Contact</div>
-    <h1>Found a bug, or just have a question?</h1>
-    <p class="page-sub">Tell us what you tested and what you expected to happen — that context is the difference between a fast fix and a guessing game.</p>
-  </div>
-  <div class="wrap content-section">
-    <div class="contact-grid">
-      <div class="contact-form">
-        <form id="contactForm">
-          <div class="form-row">
-            <label for="cName">Name</label>
-            <input type="text" id="cName" name="name" placeholder="Your name" required>
-          </div>
-          <div class="form-row">
-            <label for="cEmail">Email</label>
-            <input type="email" id="cEmail" name="email" placeholder="you@example.com" required>
-          </div>
-          <div class="form-row">
-            <label for="cTopic">What's this about?</label>
-            <select id="cTopic" name="topic">
-              <option value="bug">Bug report</option>
-              <option value="question">General question</option>
-              <option value="feature">Feature idea</option>
-              <option value="other">Something else</option>
-            </select>
-          </div>
-          <div class="form-row">
-            <label for="cMessage">Message</label>
-            <textarea id="cMessage" name="message" placeholder="If it's a bug: which URL did you test, what did Pulsewidth show, and what did you expect?" required></textarea>
-          </div>
-          <button type="submit" class="form-submit">Send message</button>
-          <div class="form-note">This opens your email client with the message pre-filled — nothing is sent from this page directly, and nothing you type here is stored or transmitted to a server.</div>
-          <div class="form-success" id="formSuccess">Your email client should now be open with this message ready to send. If nothing opened, email us directly at the address to the right.</div>
-        </form>
-      </div>
-
-      <div class="contact-channels">
-        <div class="channel-card">
-          <div class="ch-label">Email</div>
-          <div class="ch-value"><a href="mailto:kylash.rao@gmail.com">kylash.rao@gmail.com</a></div>
-          <div class="ch-sub">Best for bug reports and detailed questions. Usually a reply within a few days.</div>
-        </div>
-        <div class="channel-card">
-          <div class="ch-label">Before you write in</div>
-          <div class="ch-value">Check the FAQ first</div>
-          <div class="ch-sub">Most "why did this say Unreachable" questions are answered in the <a href="#faq" style="color:var(--accent);">FAQ section</a> above — CORS, browser extensions, and Vercel-style deployment protection are the usual culprits.</div>
-        </div>
-        <div class="channel-card">
-          <div class="ch-label">Response time</div>
-          <div class="ch-value">No SLA — this is independent</div>
-          <div class="ch-sub">Pulsewidth is a self-directed project, not a staffed support desk, so replies happen between other work.</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="page-section-divider" id="privacy">
-  <div class="wrap page-hero">
-    <a href="#top" class="back-link">
-      <svg viewBox="0 0 24 24" fill="none"><path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Back to top
-    </a>
-    <div class="eyebrow"><span class="dot"></span> Privacy</div>
-    <h1>The short version: there's almost nothing to collect.</h1>
-    <p class="page-sub">Pulsewidth has no accounts, no analytics, and no server that sees your test results. This section explains exactly what that means in practice.</p>
-  </div>
-  <div class="wrap content-section">
-    <div class="prose">
-      <span class="updated-tag">Last updated: June 2026</span>
-
-      <h2>What Pulsewidth does when you run a test</h2>
-      <p>When you enter a URL and click "Run benchmark," your browser sends a series of HTTP requests directly to that URL. This happens entirely client-side — there is no Pulsewidth server sitting in the middle, relaying your request, or logging which sites you've tested. The JavaScript runs locally in your browser tab, and the results are rendered locally in that same tab.</p>
-      <p>If you close the tab or navigate away, the results are gone. We don't have a copy, because we never received one.</p>
-
-      <h2>What we do not collect</h2>
-      <ul>
-        <li>We don't use cookies for tracking or advertising.</li>
-        <li>We don't run analytics scripts that record your visits, clicks, or test history.</li>
-        <li>We don't require — or offer — account creation, so there's no profile tied to your usage.</li>
-        <li>We don't store the URLs you test, the results they produce, or your IP address in any database, because no such database exists for this purpose.</li>
-      </ul>
-
-      <h2>What the sites you test might see</h2>
-      <p>This is the one place where "we collect nothing" doesn't mean "nothing happens." When your browser sends a request to a third-party URL you've entered, <strong>that site sees the request the same way it would see a normal visit</strong> — your IP address, your browser's user agent, and standard request headers, exactly as if you'd typed the URL into a new tab yourself. Pulsewidth doesn't add any additional tracking to those requests, but it also can't remove the visibility a website normally has into who's visiting it.</p>
-      <p>In short: testing a site is, from that site's point of view, indistinguishable from visiting it. Keep that in mind if you're testing a URL you'd rather not have associated with your IP address.</p>
-
-      <h2>Fonts and external resources</h2>
-      <p>This page loads typefaces from Google Fonts. Loading a font from a third-party CDN means your browser makes a request to that CDN, which — like any web request — is visible to the company operating it. We don't control that exchange beyond choosing to use the fonts, and we don't add any additional tracking on top of it.</p>
-
-      <h2>The contact form</h2>
-      <p>The form in our <a href="#contact">Contact us</a> section doesn't submit to a server we operate. It opens your own email client with a pre-filled message, using your browser's native <code>mailto:</code> handling. Nothing you type into that form is transmitted anywhere until you choose to send the resulting email yourself.</p>
-
-      <h2>Changes to this policy</h2>
-      <p>If how Pulsewidth works ever changes in a way that affects this section — for instance, if a future version added optional accounts or server-side history — this page would be updated to reflect that before such a feature shipped, not after.</p>
-
-      <h2>Questions</h2>
-      <p>If anything here is unclear, reach out via the <a href="#contact">contact section</a> above and we'll clarify.</p>
-    </div>
-  </div>
-</section>
-
-<footer>
-  <div class="wrap">
-    <div class="footer-row">
-      <div class="footer-brand">
+  <div id="top"></div>
+  <header>
+    <nav>
+      <div class="brand">
         <span class="brand-mark">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M2 12h4l2.5-7 5 17 3-10h5.5" stroke="#5EE6D1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M2 12h4l2.5-7 5 17 3-10h5.5" stroke="#5EE6D1" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
         </span>
         Pulsewidth
       </div>
-      <div class="footer-links">
+      <div class="nav-links">
         <a href="#test">Run a test</a>
         <a href="#method">Methodology</a>
         <a href="#faq">FAQ</a>
       </div>
+      <button class="nav-cta" id="navRunBtn">Test a site</button>
+      <button class="nav-mobile-toggle" id="navMobileToggle" aria-label="Open menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
+          <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+        </svg>
+      </button>
+    </nav>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="#test">Run a test</a>
+      <a href="#method">Methodology</a>
+      <a href="#faq">FAQ</a>
     </div>
-    <div class="footer-row footer-row-bottom">
-      <div class="footer-copy">Tests run locally in your browser. Nothing you test is logged or stored.</div>
-      <div class="footer-links footer-legal">
-        <a href="#about">About</a>
-        <a href="#contact">Contact us</a>
-        <a href="#privacy">Privacy policy</a>
+  </header>
+
+  <section class="hero" id="test">
+    <div class="wrap">
+      <div class="hero-grid">
+        <div>
+          <div class="eyebrow"><span class="dot"></span> Runs live, in your browser</div>
+          <h1>See how a website<br>actually <em>behaves</em>,<br>not how it's supposed to.</h1>
+          <p class="hero-sub">Paste a URL. We fire real requests from your browser, time every one, and chart how
+            consistent the response stays — load speed, time to first byte, and stability under repetition.</p>
+
+          <div class="test-panel">
+            <div class="input-row">
+              <input type="url" class="url-input" id="urlInput" placeholder="https://example.com" autocomplete="off"
+                spellcheck="false" aria-label="Website URL to test">
+              <button class="run-btn" id="runBtn">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M5 3l14 9-14 9V3z" fill="currentColor" />
+                </svg>
+                Run benchmark
+              </button>
+            </div>
+            <div class="option-row">
+              <label><input type="checkbox" id="optPings" checked style="accent-color:var(--accent)"> 12 sequential
+                pings</label>
+              <span>Probe depth:</span>
+              <select id="optDepth">
+                <option value="6">Quick (6 pings)</option>
+                <option value="12" selected>Standard (12 pings)</option>
+                <option value="24">Thorough (24 pings)</option>
+              </select>
+            </div>
+            <div class="hint" id="heroHint">Test runs entirely client-side. Some sites block cross-origin timing detail
+              (CORS) — when that happens, we fall back to total round-trip time and tell you plainly.</div>
+          </div>
+        </div>
+
+        <div class="scope-wrap" id="scopeWrap">
+          <span class="scope-label">Latency trace</span>
+          <div class="scope-readout">
+            <div class="big mono" id="scopeBig">— ms</div>
+            <div class="small mono" id="scopeSmall">awaiting input</div>
+          </div>
+          <canvas id="scopeCanvas"></canvas>
+          <div class="scope-status">
+            <span id="scopeStatusLeft">idle</span>
+            <span class="live" id="scopeLive" style="display:none;"><span class="dot"></span> live</span>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</footer>
+  </section>
 
-<script>
-(function(){
-  "use strict";
+  <section class="results-section" id="resultsSection">
+    <div class="wrap">
+      <div class="results-head">
+        <div>
+          <h2>Benchmark results</h2>
+          <div class="target mono" id="resultTarget">—</div>
+        </div>
+        <div class="verdict-badge" id="verdictBadge">—</div>
+      </div>
 
-  /* ---------- Canvas oscilloscope ---------- */
-  const canvas = document.getElementById('scopeCanvas');
-  const ctx = canvas.getContext('2d');
-  let scopeData = []; // array of {v: latencyMs or null for fail}
-  const SCOPE_MAX_POINTS = 60;
-  let scopeAnimId = null;
-  let idlePhase = 0;
+      <div class="progress-line" id="progressLine" aria-live="polite"></div>
 
-  function resizeCanvas(){
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * window.devicePixelRatio;
-    canvas.height = rect.height * window.devicePixelRatio;
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-  }
+      <div class="metric-grid" id="metricGrid">
+        <div class="metric-card">
+          <div class="label">Median response<span class="faint"
+              title="Time to first byte (or full round trip if CORS blocks detail)">ⓘ</span></div>
+          <div class="value" id="mMedian">—<span class="unit"> ms</span></div>
+          <div class="sub" id="mMedianSub">waiting for data</div>
+        </div>
+        <div class="metric-card">
+          <div class="label">Fastest / Slowest</div>
+          <div class="value" id="mRange">— / —</div>
+          <div class="sub" id="mRangeSub">ms, across all pings</div>
+        </div>
+        <div class="metric-card">
+          <div class="label">Jitter (stability)</div>
+          <div class="value" id="mJitter">—<span class="unit"> ms</span></div>
+          <div class="sub" id="mJitterSub">standard deviation</div>
+        </div>
+        <div class="metric-card">
+          <div class="label">Success rate</div>
+          <div class="value" id="mSuccess">—<span class="unit">%</span></div>
+          <div class="sub" id="mSuccessSub">requests completed</div>
+        </div>
+      </div>
 
-  function drawGrid(w, h){
-    ctx.strokeStyle = 'rgba(94,230,209,0.06)';
-    ctx.lineWidth = 1;
-    const cols = 10, rows = 6;
-    for(let i=1;i<cols;i++){
-      const x = (w/cols)*i;
-      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
-    }
-    for(let i=1;i<rows;i++){
-      const y = (h/rows)*i;
-      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
-    }
-  }
+      <div class="strip-section">
+        <div class="strip-head">
+          <h3>Stability strip — one tick per request, in order</h3>
+          <div class="strip-legend">
+            <span><span class="legend-swatch" style="background:var(--good)"></span> fast</span>
+            <span><span class="legend-swatch" style="background:var(--warn)"></span> slow</span>
+            <span><span class="legend-swatch" style="background:var(--fail)"></span> failed</span>
+          </div>
+        </div>
+        <div class="stability-strip" id="stabilityStrip"></div>
+        <div class="strip-axis"><span>ping 1</span><span id="stripAxisEnd">ping 12</span></div>
+      </div>
 
-  function drawIdle(){
-    const w = canvas.getBoundingClientRect().width;
-    const h = canvas.getBoundingClientRect().height;
-    ctx.clearRect(0,0,w,h);
-    drawGrid(w,h);
-    idlePhase += 0.025;
-    ctx.beginPath();
-    ctx.strokeStyle = 'rgba(94,230,209,0.35)';
-    ctx.lineWidth = 1.6;
-    const midY = h*0.55;
-    for(let x=0;x<=w;x+=3){
-      const y = midY + Math.sin((x*0.025)+idlePhase) * (h*0.06) * Math.sin(idlePhase*0.4+x*0.002);
-      if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-    }
-    ctx.stroke();
-    scopeAnimId = requestAnimationFrame(drawIdle);
-  }
+      <div class="detail-grid">
+        <div class="strip-section">
+          <div class="strip-head">
+            <h3>Response timing breakdown</h3>
+          </div>
+          <div class="timing-bars" id="timingBars"></div>
+          <div class="method-note" id="timingNote" style="margin-top:18px;">Measuring…</div>
+        </div>
+        <div class="strip-section">
+          <div class="strip-head">
+            <h3>Raw request log</h3>
+          </div>
+          <div style="max-height:280px;overflow-y:auto;">
+            <table class="runs-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Latency</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="runsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-  function drawScopeData(){
-    const w = canvas.getBoundingClientRect().width;
-    const h = canvas.getBoundingClientRect().height;
-    ctx.clearRect(0,0,w,h);
-    drawGrid(w,h);
-    if(scopeData.length === 0) return;
+  <section class="section" id="features">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">What it checks</div>
+        <h2>Three signals, one verdict</h2>
+        <p>Speed alone doesn't tell you if a site holds up. We look at how fast, how consistent, and how reliably it
+          responds — because a server that's fast once and times out the next is worse than one that's steadily
+          mediocre.</p>
+      </div>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none">
+              <path d="M12 2v4M12 18v4M2 12h4M18 12h4M12 8a4 4 0 100 8 4 4 0 000-8z" stroke="currentColor"
+                stroke-width="1.8" stroke-linecap="round" />
+            </svg></div>
+          <h3>Response speed</h3>
+          <p>Time to first byte and total round trip, measured directly by your browser's network stack — not a
+            third-party estimate.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none">
+              <path d="M3 17l5-5 4 4 8-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg></div>
+          <h3>Stability under repetition</h3>
+          <p>We send a run of consecutive requests and chart the spread. A server that swings wildly between fast and
+            slow shows up immediately on the strip.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" />
+              <path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg></div>
+          <h3>Availability</h3>
+          <p>Every failed, timed-out, or non-2xx response counts against the success rate, so an unreliable host can't
+            hide behind a good average.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    const validVals = scopeData.filter(d => d.v !== null).map(d => d.v);
-    const maxV = validVals.length ? Math.max(...validVals, 1) : 1;
-    const pad = 24;
-    const usableH = h - pad*2;
-    const step = w / Math.max(SCOPE_MAX_POINTS - 1, 1);
+  <section class="section" id="method" style="background:var(--bg-raised);">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">How it works</div>
+        <h2>No server in the middle</h2>
+        <p>Most "speed test" tools route your request through their own infrastructure first. This one doesn't — your
+          browser talks to the target directly, so the numbers reflect what your visit would actually feel like.</p>
+      </div>
+      <div class="how-steps">
+        <div class="how-step">
+          <div class="how-num">1</div>
+          <h4>You enter a URL</h4>
+          <p>No account, no install. The address bar is the whole interface.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-num">2</div>
+          <h4>Your browser fires the requests</h4>
+          <p>A sequence of real HTTP requests goes out from your machine, timed with the browser's native Performance
+            API.</p>
+        </div>
+        <div class="how-step">
+          <div class="how-num">3</div>
+          <h4>We plot every result</h4>
+          <p>Each ping lands on the stability strip as it completes — pass, slow, or failed — building the picture live.
+          </p>
+        </div>
+        <div class="how-step">
+          <div class="how-num">4</div>
+          <h4>You get a plain verdict</h4>
+          <p>Median speed, jitter, and success rate roll up into one of three calls: solid, shaky, or unreliable.</p>
+        </div>
+      </div>
 
-    // baseline
-    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
-    ctx.setLineDash([4,4]);
-    ctx.beginPath(); ctx.moveTo(0, h-pad); ctx.lineTo(w, h-pad); ctx.stroke();
-    ctx.setLineDash([]);
+      <div class="method-note" style="margin-top:36px;">
+        <strong>Why the numbers can differ from other tools:</strong> services like WebPageTest run from dedicated lab
+        machines on controlled networks and can read deep browser-internal timing because they load the page in a full
+        instrumented browser they control. A page tested from your own browser is bound by the same-origin policy — most
+        sites don't send the CORS headers that would let us see DNS, TCP, and TLS time separately for a cross-origin
+        request. When that detail isn't available, we measure total elapsed time end-to-end instead and say so plainly,
+        rather than inventing a breakdown we can't actually see.
+      </div>
+    </div>
+  </section>
 
-    // line
-    ctx.beginPath();
-    ctx.strokeStyle = '#5EE6D1';
-    ctx.lineWidth = 2;
-    ctx.lineJoin = 'round';
-    let started = false;
-    scopeData.forEach((d, i) => {
-      const x = i * step;
-      if(d.v === null) return;
-      const y = (h - pad) - (d.v / maxV) * usableH;
-      if(!started){ ctx.moveTo(x,y); started = true; } else ctx.lineTo(x,y);
-    });
-    ctx.stroke();
+  <section class="section" id="faq">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">Questions</div>
+        <h2>Before you ask</h2>
+      </div>
+      <div id="faqList" style="max-width:760px;"></div>
+    </div>
+  </section>
 
-    // glow fill
-    ctx.lineTo((scopeData.length-1)*step, h-pad);
-    ctx.lineTo(0, h-pad);
-    ctx.closePath();
-    const grad = ctx.createLinearGradient(0,0,0,h);
-    grad.addColorStop(0,'rgba(94,230,209,0.16)');
-    grad.addColorStop(1,'rgba(94,230,209,0)');
-    ctx.fillStyle = grad;
-    ctx.fill();
+  <section class="page-section-divider" id="about">
+    <div class="wrap page-hero">
+      <a href="#top" class="back-link">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+        Back to top
+      </a>
+      <div class="eyebrow"><span class="dot"></span> About</div>
+      <h1>A meter, not a marketing claim.</h1>
+      <p class="page-sub">Pulsewidth exists because most "is this site fast?" tools answer a question nobody asked, from
+        a vantage point nobody visits from. Here's what we're actually trying to do instead.</p>
+    </div>
+    <div class="wrap content-section">
+      <div class="about-grid">
+        <div class="prose">
+          <h2>Why this exists</h2>
+          <p>Most performance dashboards are built to make a number go up — a Lighthouse score, a synthetic grade, a
+            badge you can put in a README. Those numbers are useful for what they measure, but they're measured from a
+            lab: a fixed data center, a controlled network, a browser instrumented in ways your actual visitors'
+            browsers never are.</p>
+          <p>Pulsewidth measures something narrower and, we think, more honest: <strong>what happens when your own
+              browser, on your own connection, asks a server for a page — twelve times in a row.</strong> No lab. No
+            synthetic throttling profile standing in for a real network. Just repeated, real requests, timed plainly.
+          </p>
 
-    // points
-    scopeData.forEach((d, i) => {
-      const x = i * step;
-      if(d.v === null){
-        const y = h - pad - usableH*0.02;
-        ctx.beginPath();
-        ctx.fillStyle = '#FF6B5E';
-        ctx.arc(x, h/2, 3.5, 0, Math.PI*2);
-        ctx.fill();
-        return;
+          <h2>What "benchmark" means here</h2>
+          <p>We don't grade sites against an industry curve or assign letter grades. A benchmark, to us, just means:
+            here is the same test, run the same way, every time — so you can compare a site against itself over time, or
+            compare two sites under the same conditions, without us deciding what "good" means on your behalf.</p>
+          <p>The verdict labels — <strong>Solid, Shaky, Unreliable, Unreachable</strong> — are deliberately plain. They
+            roll up median speed, consistency (jitter), and success rate into one read, but the underlying numbers are
+            always shown too, so you're never just trusting our adjective.</p>
+
+          <h2>What we won't pretend to do</h2>
+          <p>Browsers enforce a security boundary called the same-origin policy. It means a page running in your browser
+            can't always see the fine-grained timing breakdown (DNS time, TCP handshake, TLS negotiation) for a site it
+            doesn't control — that detail is only exposed when the target site explicitly opts in via CORS headers, and
+            most don't.</p>
+          <p>When that detail isn't available, we say so directly in the results rather than inventing numbers that look
+            precise but aren't real. We'd rather hand you an honest "we can't see that part" than a confident-looking
+            chart built on a guess.</p>
+
+          <h2>Who built this</h2>
+          <p>Pulsewidth is an independent project, built and maintained by <strong>Kailash Rao Shivaji</strong>. It's
+            part of a small set of self-directed tools and learning projects rather than a venture-backed product —
+            which is also why it has no tracking, no accounts, and no plan to ever require either.</p>
+        </div>
+
+        <div>
+          <div class="stat-card">
+            <div class="stat-label">Runs from</div>
+            <div class="stat-value">Your browser</div>
+            <div class="stat-sub">Not a lab server. The numbers reflect your actual network path to the target.</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Data retained</div>
+            <div class="stat-value">None</div>
+            <div class="stat-sub">Tests aren't logged, stored, or sent anywhere. Closing the tab clears everything.
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Signals measured</div>
+            <div class="stat-value">3</div>
+            <div class="stat-sub">Response speed, stability across repeated pings, and request success rate.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section-divider" id="contact">
+    <div class="wrap page-hero">
+      <a href="#top" class="back-link">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+        Back to top
+      </a>
+      <div class="eyebrow"><span class="dot"></span> Contact</div>
+      <h1>Found a bug, or just have a question?</h1>
+      <p class="page-sub">Tell us what you tested and what you expected to happen — that context is the difference
+        between a fast fix and a guessing game.</p>
+    </div>
+    <div class="wrap content-section">
+      <div class="contact-grid">
+        <div class="contact-form">
+          <form id="contactForm">
+            <div class="form-row">
+              <label for="cName">Name</label>
+              <input type="text" id="cName" name="name" placeholder="Your name" required>
+            </div>
+            <div class="form-row">
+              <label for="cEmail">Email</label>
+              <input type="email" id="cEmail" name="email" placeholder="you@example.com" required>
+            </div>
+            <div class="form-row">
+              <label for="cTopic">What's this about?</label>
+              <select id="cTopic" name="topic">
+                <option value="bug">Bug report</option>
+                <option value="question">General question</option>
+                <option value="feature">Feature idea</option>
+                <option value="other">Something else</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label for="cMessage">Message</label>
+              <textarea id="cMessage" name="message"
+                placeholder="If it's a bug: which URL did you test, what did Pulsewidth show, and what did you expect?"
+                required></textarea>
+            </div>
+            <button type="submit" class="form-submit">Send message</button>
+            <div class="form-note">This opens your email client with the message pre-filled — nothing is sent from this
+              page directly, and nothing you type here is stored or transmitted to a server.</div>
+            <div class="form-success" id="formSuccess">Your email client should now be open with this message ready to
+              send. If nothing opened, email us directly at the address to the right.</div>
+          </form>
+        </div>
+
+        <div class="contact-channels">
+          <div class="channel-card">
+            <div class="ch-label">Email</div>
+            <div class="ch-value"><a href="mailto:kylash.rao@gmail.com">kylash.rao@gmail.com</a></div>
+            <div class="ch-sub">Best for bug reports and detailed questions. Usually a reply within a few days.</div>
+          </div>
+          <div class="channel-card">
+            <div class="ch-label">Before you write in</div>
+            <div class="ch-value">Check the FAQ first</div>
+            <div class="ch-sub">Most "why did this say Unreachable" questions are answered in the <a href="#faq"
+                style="color:var(--accent);">FAQ section</a> above — CORS, browser extensions, and Vercel-style
+              deployment protection are the usual culprits.</div>
+          </div>
+          <div class="channel-card">
+            <div class="ch-label">Response time</div>
+            <div class="ch-value">No SLA — this is independent</div>
+            <div class="ch-sub">Pulsewidth is a self-directed project, not a staffed support desk, so replies happen
+              between other work.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section-divider" id="privacy">
+    <div class="wrap page-hero">
+      <a href="#top" class="back-link">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+        Back to top
+      </a>
+      <div class="eyebrow"><span class="dot"></span> Privacy</div>
+      <h1>The short version: there's almost nothing to collect.</h1>
+      <p class="page-sub">Pulsewidth has no accounts, no analytics, and no server that sees your test results. This
+        section explains exactly what that means in practice.</p>
+    </div>
+    <div class="wrap content-section">
+      <div class="prose">
+        <span class="updated-tag">Last updated: June 2026</span>
+
+        <h2>What Pulsewidth does when you run a test</h2>
+        <p>When you enter a URL and click "Run benchmark," your browser sends a series of HTTP requests directly to that
+          URL. This happens entirely client-side — there is no Pulsewidth server sitting in the middle, relaying your
+          request, or logging which sites you've tested. The JavaScript runs locally in your browser tab, and the
+          results are rendered locally in that same tab.</p>
+        <p>If you close the tab or navigate away, the results are gone. We don't have a copy, because we never received
+          one.</p>
+
+        <h2>What we do not collect</h2>
+        <ul>
+          <li>We don't use cookies for tracking or advertising.</li>
+          <li>We don't run analytics scripts that record your visits, clicks, or test history.</li>
+          <li>We don't require — or offer — account creation, so there's no profile tied to your usage.</li>
+          <li>We don't store the URLs you test, the results they produce, or your IP address in any database, because no
+            such database exists for this purpose.</li>
+        </ul>
+
+        <h2>What the sites you test might see</h2>
+        <p>This is the one place where "we collect nothing" doesn't mean "nothing happens." When your browser sends a
+          request to a third-party URL you've entered, <strong>that site sees the request the same way it would see a
+            normal visit</strong> — your IP address, your browser's user agent, and standard request headers, exactly as
+          if you'd typed the URL into a new tab yourself. Pulsewidth doesn't add any additional tracking to those
+          requests, but it also can't remove the visibility a website normally has into who's visiting it.</p>
+        <p>In short: testing a site is, from that site's point of view, indistinguishable from visiting it. Keep that in
+          mind if you're testing a URL you'd rather not have associated with your IP address.</p>
+
+        <h2>Fonts and external resources</h2>
+        <p>This page loads typefaces from Google Fonts. Loading a font from a third-party CDN means your browser makes a
+          request to that CDN, which — like any web request — is visible to the company operating it. We don't control
+          that exchange beyond choosing to use the fonts, and we don't add any additional tracking on top of it.</p>
+
+        <h2>The contact form</h2>
+        <p>The form in our <a href="#contact">Contact us</a> section doesn't submit to a server we operate. It opens
+          your own email client with a pre-filled message, using your browser's native <code>mailto:</code> handling.
+          Nothing you type into that form is transmitted anywhere until you choose to send the resulting email yourself.
+        </p>
+
+        <h2>Changes to this policy</h2>
+        <p>If how Pulsewidth works ever changes in a way that affects this section — for instance, if a future version
+          added optional accounts or server-side history — this page would be updated to reflect that before such a
+          feature shipped, not after.</p>
+
+        <h2>Questions</h2>
+        <p>If anything here is unclear, reach out via the <a href="#contact">contact section</a> above and we'll
+          clarify.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <div class="footer-row">
+        <div class="footer-brand">
+          <span class="brand-mark">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M2 12h4l2.5-7 5 17 3-10h5.5" stroke="#5EE6D1" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </span>
+          Pulsewidth
+        </div>
+        <div class="footer-links">
+          <a href="#test">Run a test</a>
+          <a href="#method">Methodology</a>
+          <a href="#faq">FAQ</a>
+        </div>
+      </div>
+      <div class="footer-row footer-row-bottom">
+        <div class="footer-copy">Tests run locally in your browser. Nothing you test is logged or stored.</div>
+        <div class="footer-links footer-legal">
+          <a href="#about">About</a>
+          <a href="#contact">Contact us</a>
+          <a href="#privacy">Privacy policy</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      "use strict";
+
+      /* ---------- Canvas oscilloscope ---------- */
+      const canvas = document.getElementById('scopeCanvas');
+      const ctx = canvas.getContext('2d');
+      let scopeData = []; // array of {v: latencyMs or null for fail}
+      const SCOPE_MAX_POINTS = 60;
+      let scopeAnimId = null;
+      let idlePhase = 0;
+
+      function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * window.devicePixelRatio;
+        canvas.height = rect.height * window.devicePixelRatio;
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
       }
-      const y = (h - pad) - (d.v / maxV) * usableH;
-      ctx.beginPath();
-      ctx.fillStyle = '#5EE6D1';
-      ctx.arc(x, y, 3, 0, Math.PI*2);
-      ctx.fill();
-    });
-  }
 
-  window.addEventListener('resize', () => {
-    resizeCanvas();
-    if(scopeData.length) drawScopeData();
-  });
-  resizeCanvas();
-  drawIdle();
-
-  /* ---------- DOM refs ---------- */
-  const urlInput = document.getElementById('urlInput');
-  const runBtn = document.getElementById('runBtn');
-  const navRunBtn = document.getElementById('navRunBtn');
-  const optDepth = document.getElementById('optDepth');
-  const resultsSection = document.getElementById('resultsSection');
-  const resultTarget = document.getElementById('resultTarget');
-  const verdictBadge = document.getElementById('verdictBadge');
-  const progressLine = document.getElementById('progressLine');
-  const stabilityStrip = document.getElementById('stabilityStrip');
-  const stripAxisEnd = document.getElementById('stripAxisEnd');
-  const runsTableBody = document.getElementById('runsTableBody');
-  const timingBars = document.getElementById('timingBars');
-  const timingNote = document.getElementById('timingNote');
-  const scopeBig = document.getElementById('scopeBig');
-  const scopeSmall = document.getElementById('scopeSmall');
-  const scopeStatusLeft = document.getElementById('scopeStatusLeft');
-  const scopeLive = document.getElementById('scopeLive');
-
-  navRunBtn.addEventListener('click', () => {
-    document.getElementById('test').scrollIntoView({behavior:'smooth'});
-    setTimeout(() => urlInput.focus(), 400);
-  });
-
-  const navMobileToggle = document.getElementById('navMobileToggle');
-  const mobileMenu = document.getElementById('mobileMenu');
-  navMobileToggle.addEventListener('click', () => {
-    const isOpen = mobileMenu.classList.toggle('open');
-    navMobileToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-  });
-  mobileMenu.querySelectorAll('a').forEach(a => {
-    a.addEventListener('click', () => {
-      mobileMenu.classList.remove('open');
-      navMobileToggle.setAttribute('aria-expanded', 'false');
-    });
-  });
-
-  function normalizeUrl(raw){
-    let v = raw.trim();
-    if(!v) return null;
-    if(!/^https?:\/\//i.test(v)) v = 'https://' + v;
-    try{
-      const u = new URL(v);
-      return u.toString();
-    }catch(e){
-      return null;
-    }
-  }
-
-  function median(arr){
-    if(!arr.length) return 0;
-    const s = [...arr].sort((a,b)=>a-b);
-    const mid = Math.floor(s.length/2);
-    return s.length % 2 ? s[mid] : (s[mid-1]+s[mid])/2;
-  }
-  function stddev(arr){
-    if(arr.length < 2) return 0;
-    const m = arr.reduce((a,b)=>a+b,0)/arr.length;
-    const variance = arr.reduce((a,b)=>a+(b-m)*(b-m),0)/arr.length;
-    return Math.sqrt(variance);
-  }
-
-  let testRunning = false;
-
-  async function runSinglePing(url, attemptIndex){
-    const start = performance.now();
-    try{
-      // no-cors so we can at least attempt opaque responses on sites without CORS headers.
-      // We use 'cors' first try via HEAD-like GET; if it throws (network/CORS), we still
-      // got real wall-clock timing up to the point of failure/opaque response.
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
-      let mode = 'cors';
-      let res, errored = false, statusKnown = true, httpStatus = null;
-      try{
-        res = await fetch(url, {
-          method:'GET',
-          mode:'cors',
-          cache:'no-store',
-          signal: controller.signal,
-          redirect:'follow'
-        });
-        httpStatus = res.status;
-      }catch(corsErr){
-        // retry no-cors: gives opaque response but confirms reachability + timing
-        mode = 'no-cors';
-        statusKnown = false;
-        try{
-          res = await fetch(url, {
-            method:'GET',
-            mode:'no-cors',
-            cache:'no-store',
-            signal: controller.signal,
-            redirect:'follow'
-          });
-        }catch(noCorsErr){
-          errored = true;
+      function drawGrid(w, h) {
+        ctx.strokeStyle = 'rgba(94,230,209,0.06)';
+        ctx.lineWidth = 1;
+        const cols = 10, rows = 6;
+        for (let i = 1; i < cols; i++) {
+          const x = (w / cols) * i;
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+        }
+        for (let i = 1; i < rows; i++) {
+          const y = (h / rows) * i;
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
         }
       }
-      clearTimeout(timeoutId);
-      const elapsed = performance.now() - start;
-      if(errored){
-        return {ok:false, ms:elapsed, status:'failed', mode, httpStatus:null};
+
+      function drawIdle() {
+        const w = canvas.getBoundingClientRect().width;
+        const h = canvas.getBoundingClientRect().height;
+        ctx.clearRect(0, 0, w, h);
+        drawGrid(w, h);
+        idlePhase += 0.025;
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(94,230,209,0.35)';
+        ctx.lineWidth = 1.6;
+        const midY = h * 0.55;
+        for (let x = 0; x <= w; x += 3) {
+          const y = midY + Math.sin((x * 0.025) + idlePhase) * (h * 0.06) * Math.sin(idlePhase * 0.4 + x * 0.002);
+          if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        scopeAnimId = requestAnimationFrame(drawIdle);
       }
-      const ok = statusKnown ? (httpStatus >= 200 && httpStatus < 400) : true; // opaque = assume reachable
-      return {ok, ms:elapsed, status: statusKnown ? (httpStatus) : 'opaque', mode, httpStatus};
-    }catch(e){
-      const elapsed = performance.now() - start;
-      return {ok:false, ms:elapsed, status:'error', mode:'error', httpStatus:null};
-    }
-  }
 
-  function classify(ms, ok){
-    if(!ok) return 'fail';
-    if(ms < 400) return 'good';
-    if(ms < 1200) return 'mid';
-    return 'slow';
-  }
+      function drawScopeData() {
+        const w = canvas.getBoundingClientRect().width;
+        const h = canvas.getBoundingClientRect().height;
+        ctx.clearRect(0, 0, w, h);
+        drawGrid(w, h);
+        if (scopeData.length === 0) return;
 
-  function tickColor(cls){
-    if(cls==='good') return 'var(--good)';
-    if(cls==='mid') return 'var(--accent-dim)';
-    if(cls==='slow') return 'var(--warn)';
-    return 'var(--fail)';
-  }
+        const validVals = scopeData.filter(d => d.v !== null).map(d => d.v);
+        const maxV = validVals.length ? Math.max(...validVals, 1) : 1;
+        const pad = 24;
+        const usableH = h - pad * 2;
+        const step = w / Math.max(SCOPE_MAX_POINTS - 1, 1);
 
-  function renderProgress(text){
-    progressLine.innerHTML = text + ' <span class="cursor">▮</span>';
-  }
+        // baseline
+        ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(0, h - pad); ctx.lineTo(w, h - pad); ctx.stroke();
+        ctx.setLineDash([]);
 
-  async function startTest(){
-    if(testRunning) return;
-    const normalized = normalizeUrl(urlInput.value);
-    if(!normalized){
-      urlInput.style.borderColor = 'var(--fail)';
-      urlInput.placeholder = 'Enter a valid URL, e.g. https://example.com';
-      setTimeout(() => { urlInput.style.borderColor=''; }, 1800);
-      return;
-    }
-    testRunning = true;
-    runBtn.disabled = true;
-    runBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" style="animation:pulse-dot 1s infinite;"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/></svg> Running…';
+        // line
+        ctx.beginPath();
+        ctx.strokeStyle = '#5EE6D1';
+        ctx.lineWidth = 2;
+        ctx.lineJoin = 'round';
+        let started = false;
+        scopeData.forEach((d, i) => {
+          const x = i * step;
+          if (d.v === null) return;
+          const y = (h - pad) - (d.v / maxV) * usableH;
+          if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
 
-    const depth = parseInt(optDepth.value, 10);
-    scopeData = [];
-    scopeLive.style.display = 'flex';
-    scopeStatusLeft.textContent = 'transmitting';
-    if(scopeAnimId) cancelAnimationFrame(scopeAnimId);
+        // glow fill
+        ctx.lineTo((scopeData.length - 1) * step, h - pad);
+        ctx.lineTo(0, h - pad);
+        ctx.closePath();
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, 'rgba(94,230,209,0.16)');
+        grad.addColorStop(1, 'rgba(94,230,209,0)');
+        ctx.fillStyle = grad;
+        ctx.fill();
 
-    resultsSection.classList.add('visible');
-    resultTarget.textContent = normalized;
-    resultTarget.scrollIntoView({behavior:'smooth', block:'start'});
-    verdictBadge.textContent = 'Testing…';
-    verdictBadge.className = 'verdict-badge';
-    runsTableBody.innerHTML = '';
-    stabilityStrip.innerHTML = '';
-    stripAxisEnd.textContent = `ping ${depth}`;
-    timingNote.textContent = 'Measuring…';
+        // points
+        scopeData.forEach((d, i) => {
+          const x = i * step;
+          if (d.v === null) {
+            const y = h - pad - usableH * 0.02;
+            ctx.beginPath();
+            ctx.fillStyle = '#FF6B5E';
+            ctx.arc(x, h / 2, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+            return;
+          }
+          const y = (h - pad) - (d.v / maxV) * usableH;
+          ctx.beginPath();
+          ctx.fillStyle = '#5EE6D1';
+          ctx.arc(x, y, 3, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
 
-    document.getElementById('mMedian').innerHTML = '—<span class="unit"> ms</span>';
-    document.getElementById('mRange').textContent = '— / —';
-    document.getElementById('mJitter').innerHTML = '—<span class="unit"> ms</span>';
-    document.getElementById('mSuccess').innerHTML = '—<span class="unit">%</span>';
-
-    const results = [];
-    let usedMode = null;
-
-    for(let i=0; i<depth; i++){
-      renderProgress(`Sending request ${i+1} of ${depth} to ${new URL(normalized).hostname}…`);
-      const r = await runSinglePing(normalized, i);
-      results.push(r);
-      usedMode = r.mode === 'cors' ? (usedMode || 'cors') : (usedMode === 'cors' ? usedMode : 'no-cors');
-
-      const cls = classify(r.ms, r.ok);
-      scopeData.push({v: r.ok ? r.ms : null});
-      if(scopeData.length > SCOPE_MAX_POINTS) scopeData.shift();
-      drawScopeData();
-      scopeBig.textContent = (r.ok ? Math.round(r.ms) : '—') + ' ms';
-      scopeSmall.textContent = `ping ${i+1} of ${depth} · ${r.ok ? 'ok' : 'failed'}`;
-
-      // table row
-      const tr = document.createElement('tr');
-      const pill = r.ok
-        ? (cls==='slow' ? `<span class="status-pill slow">SLOW</span>` : `<span class="status-pill ok">OK</span>`)
-        : `<span class="status-pill err">FAIL</span>`;
-      tr.innerHTML = `<td>${i+1}</td><td>${Math.round(r.ms)} ms</td><td>${pill}</td>`;
-      runsTableBody.appendChild(tr);
-
-      // strip tick
-      const tick = document.createElement('div');
-      tick.className = 'tick';
-      const maxBar = Math.max(...results.filter(x=>x.ok).map(x=>x.ms), 200);
-      const heightPct = r.ok ? Math.max(8, Math.min(100, (r.ms/maxBar)*100)) : 100;
-      tick.style.height = heightPct + '%';
-      tick.style.background = tickColor(cls);
-      tick.setAttribute('data-tip', `#${i+1}: ${r.ok ? Math.round(r.ms)+' ms' : 'failed'}`);
-      stabilityStrip.appendChild(tick);
-
-      // small stagger so it visibly streams in, not blocking real timing
-      await new Promise(res => setTimeout(res, 40));
-    }
-
-    finalizeResults(results, normalized, usedMode, depth);
-  }
-
-  function finalizeResults(results, url, mode, depth){
-    testRunning = false;
-    runBtn.disabled = false;
-    runBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 3l14 9-14 9V3z" fill="currentColor"/></svg> Run again';
-    scopeLive.style.display = 'none';
-    scopeStatusLeft.textContent = 'complete';
-
-    const okResults = results.filter(r => r.ok);
-    const failCount = results.length - okResults.length;
-    const latencies = okResults.map(r => r.ms);
-    const med = median(latencies);
-    const min = latencies.length ? Math.min(...latencies) : null;
-    const max = latencies.length ? Math.max(...latencies) : null;
-    const jitter = stddev(latencies);
-    const successRate = Math.round((okResults.length / results.length) * 100);
-
-    if(okResults.length === 0){
-      document.getElementById('mMedian').innerHTML = `—<span class="unit"> ms</span>`;
-      document.getElementById('mMedianSub').textContent = 'no successful responses';
-      document.getElementById('mRange').textContent = '— / —';
-      document.getElementById('mJitter').innerHTML = `—<span class="unit"> ms</span>`;
-      document.getElementById('mJitterSub').textContent = 'not enough data';
-    } else {
-      document.getElementById('mMedian').innerHTML = `${Math.round(med)}<span class="unit"> ms</span>`;
-      document.getElementById('mMedianSub').textContent = mode === 'no-cors' ? 'total round trip (CORS-restricted)' : 'time to first byte';
-      document.getElementById('mRange').textContent = `${Math.round(min)} / ${Math.round(max)}`;
-      document.getElementById('mJitter').innerHTML = `${Math.round(jitter)}<span class="unit"> ms</span>`;
-      document.getElementById('mJitterSub').textContent = jitter < 80 ? 'tight — very consistent' : jitter < 250 ? 'moderate spread' : 'wide — inconsistent';
-    }
-    document.getElementById('mSuccess').innerHTML = `${successRate}<span class="unit">%</span>`;
-    document.getElementById('mSuccessSub').textContent = `${okResults.length} of ${results.length} requests completed`;
-
-    // verdict
-    let verdict = 'good', label = 'Solid';
-    if(okResults.length === 0){
-      verdict = 'fail'; label = 'Unreachable';
-    } else if(successRate < 70 || med > 2500){
-      verdict = 'fail'; label = 'Unreliable';
-    } else if(successRate < 95 || jitter > 300 || med > 900){
-      verdict = 'warn'; label = 'Shaky';
-    }
-    verdictBadge.textContent = label;
-    verdictBadge.className = 'verdict-badge ' + verdict;
-
-    progressLine.textContent = `Done. ${results.length} requests sent to ${new URL(url).hostname}, ${failCount} failed.`;
-
-    // timing breakdown bars - synthesize from what we actually know
-    timingBars.innerHTML = '';
-    if(okResults.length === 0){
-      timingBars.innerHTML = `<div style="font-family:var(--font-mono);font-size:12.5px;color:var(--text-faint);padding:6px 0;">No successful responses to chart.</div>`;
-    } else {
-      const rows = [
-        {label:'Fastest', val:min, max:max||1},
-        {label:'Median', val:med, max:max||1},
-        {label:'Slowest', val:max, max:max||1},
-      ];
-      rows.forEach(r => {
-        const row = document.createElement('div');
-        row.className = 'timing-row';
-        const pct = max ? Math.max(4, (r.val/max)*100) : 4;
-        row.innerHTML = `<div class="t-label">${r.label}</div><div class="timing-track"><div class="timing-fill" style="width:${pct}%"></div></div><div class="t-val">${Math.round(r.val)} ms</div>`;
-        timingBars.appendChild(row);
+      window.addEventListener('resize', () => {
+        resizeCanvas();
+        if (scopeData.length) drawScopeData();
       });
-    }
+      resizeCanvas();
+      drawIdle();
 
-    const host = new URL(url).hostname;
-    if(okResults.length === 0){
-      timingNote.textContent = `Every request to ${host} failed outright — that points to the domain not resolving, the server refusing the connection, or a network-level block, rather than a CORS restriction. Double-check the URL is correct and reachable.`;
-    } else if(mode === 'no-cors'){
-      timingNote.textContent = `${host} doesn't send permissive CORS headers, so the browser only exposes total elapsed time for cross-origin requests — not a DNS/TCP/TLS breakdown. The numbers above are real, measured round-trip times; they're just not split into sub-phases.`;
-    } else {
-      timingNote.textContent = `Times above reflect server response time as measured by the Fetch API directly from your browser to ${host}, with no intermediary.`;
-    }
-  }
+      /* ---------- DOM refs ---------- */
+      const urlInput = document.getElementById('urlInput');
+      const runBtn = document.getElementById('runBtn');
+      const navRunBtn = document.getElementById('navRunBtn');
+      const optDepth = document.getElementById('optDepth');
+      const resultsSection = document.getElementById('resultsSection');
+      const resultTarget = document.getElementById('resultTarget');
+      const verdictBadge = document.getElementById('verdictBadge');
+      const progressLine = document.getElementById('progressLine');
+      const stabilityStrip = document.getElementById('stabilityStrip');
+      const stripAxisEnd = document.getElementById('stripAxisEnd');
+      const runsTableBody = document.getElementById('runsTableBody');
+      const timingBars = document.getElementById('timingBars');
+      const timingNote = document.getElementById('timingNote');
+      const scopeBig = document.getElementById('scopeBig');
+      const scopeSmall = document.getElementById('scopeSmall');
+      const scopeStatusLeft = document.getElementById('scopeStatusLeft');
+      const scopeLive = document.getElementById('scopeLive');
 
-  runBtn.addEventListener('click', startTest);
-  urlInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') startTest(); });
+      navRunBtn.addEventListener('click', () => {
+        document.getElementById('test').scrollIntoView({ behavior: 'smooth' });
+        setTimeout(() => urlInput.focus(), 400);
+      });
 
-  /* ---------- FAQ ---------- */
-  const faqs = [
-    {
-      q:"Why might these numbers differ from WebPageTest or PageSpeed Insights?",
-      a:"Those tools run from dedicated lab servers with full instrumented browsers they control, so they can measure deep internals like DNS, TLS handshake, and render time separately. This tool runs in your own browser tab, bound by the same security rules any website's JavaScript follows — so for most cross-origin sites, we get accurate total response time, but not the same level of internal breakdown."
-    },
-    {
-      q:"Is this testing from my location or from a server somewhere else?",
-      a:"From wherever you're sitting right now. That's a feature, not a limitation — it tells you what the site feels like for someone on your actual connection, not an idealized lab network."
-    },
-    {
-      q:"Why did some pings fail when the site is clearly up?",
-      a:"A few possibilities: the site blocks cross-origin requests entirely (some APIs and login-walled sites do), there's a rate limit kicking in after repeated requests, or there was a genuine timeout. The raw request log shows exactly which pings failed and when."
-    },
-    {
-      q:"Do you store the URLs I test?",
-      a:"No. Everything happens in your browser tab and disappears when you close it or test something else."
-    },
-    {
-      q:"What counts as 'slow' or 'unreliable' in the verdict?",
-      a:"Solid means a fast median response with a high success rate and low jitter. Shaky means it mostly works but with noticeable inconsistency or a sluggish median. Unreliable means a meaningful share of requests failed outright or responses were consistently very slow."
-    }
-  ];
-  const faqList = document.getElementById('faqList');
-  faqs.forEach((f, i) => {
-    const item = document.createElement('div');
-    item.className = 'faq-item';
-    item.innerHTML = `
+      const navMobileToggle = document.getElementById('navMobileToggle');
+      const mobileMenu = document.getElementById('mobileMenu');
+      navMobileToggle.addEventListener('click', () => {
+        const isOpen = mobileMenu.classList.toggle('open');
+        navMobileToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      });
+      mobileMenu.querySelectorAll('a').forEach(a => {
+        a.addEventListener('click', () => {
+          mobileMenu.classList.remove('open');
+          navMobileToggle.setAttribute('aria-expanded', 'false');
+        });
+      });
+
+      function normalizeUrl(raw) {
+        let v = raw.trim();
+        if (!v) return null;
+        if (!/^https?:\/\//i.test(v)) v = 'https://' + v;
+        try {
+          const u = new URL(v);
+          return u.toString();
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function median(arr) {
+        if (!arr.length) return 0;
+        const s = [...arr].sort((a, b) => a - b);
+        const mid = Math.floor(s.length / 2);
+        return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+      }
+      function stddev(arr) {
+        if (arr.length < 2) return 0;
+        const m = arr.reduce((a, b) => a + b, 0) / arr.length;
+        const variance = arr.reduce((a, b) => a + (b - m) * (b - m), 0) / arr.length;
+        return Math.sqrt(variance);
+      }
+
+      let testRunning = false;
+
+      async function runSinglePing(url, attemptIndex) {
+        const start = performance.now();
+        try {
+          // no-cors so we can at least attempt opaque responses on sites without CORS headers.
+          // We use 'cors' first try via HEAD-like GET; if it throws (network/CORS), we still
+          // got real wall-clock timing up to the point of failure/opaque response.
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000);
+          let mode = 'cors';
+          let res, errored = false, statusKnown = true, httpStatus = null;
+          try {
+            res = await fetch(url, {
+              method: 'GET',
+              mode: 'cors',
+              cache: 'no-store',
+              signal: controller.signal,
+              redirect: 'follow'
+            });
+            httpStatus = res.status;
+          } catch (corsErr) {
+            // retry no-cors: gives opaque response but confirms reachability + timing
+            mode = 'no-cors';
+            statusKnown = false;
+            try {
+              res = await fetch(url, {
+                method: 'GET',
+                mode: 'no-cors',
+                cache: 'no-store',
+                signal: controller.signal,
+                redirect: 'follow'
+              });
+            } catch (noCorsErr) {
+              errored = true;
+            }
+          }
+          clearTimeout(timeoutId);
+          const elapsed = performance.now() - start;
+          if (errored) {
+            return { ok: false, ms: elapsed, status: 'failed', mode, httpStatus: null };
+          }
+          const ok = statusKnown ? (httpStatus >= 200 && httpStatus < 400) : true; // opaque = assume reachable
+          return { ok, ms: elapsed, status: statusKnown ? (httpStatus) : 'opaque', mode, httpStatus };
+        } catch (e) {
+          const elapsed = performance.now() - start;
+          return { ok: false, ms: elapsed, status: 'error', mode: 'error', httpStatus: null };
+        }
+      }
+
+      function classify(ms, ok) {
+        if (!ok) return 'fail';
+        if (ms < 400) return 'good';
+        if (ms < 1200) return 'mid';
+        return 'slow';
+      }
+
+      function tickColor(cls) {
+        if (cls === 'good') return 'var(--good)';
+        if (cls === 'mid') return 'var(--accent-dim)';
+        if (cls === 'slow') return 'var(--warn)';
+        return 'var(--fail)';
+      }
+
+      function renderProgress(text) {
+        progressLine.innerHTML = text + ' <span class="cursor">▮</span>';
+      }
+
+      async function startTest() {
+        if (testRunning) return;
+        const normalized = normalizeUrl(urlInput.value);
+        if (!normalized) {
+          urlInput.style.borderColor = 'var(--fail)';
+          urlInput.placeholder = 'Enter a valid URL, e.g. https://example.com';
+          setTimeout(() => { urlInput.style.borderColor = ''; }, 1800);
+          return;
+        }
+        testRunning = true;
+        runBtn.disabled = true;
+        runBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" style="animation:pulse-dot 1s infinite;"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/></svg> Running…';
+
+        const depth = parseInt(optDepth.value, 10);
+        scopeData = [];
+        scopeLive.style.display = 'flex';
+        scopeStatusLeft.textContent = 'transmitting';
+        if (scopeAnimId) cancelAnimationFrame(scopeAnimId);
+
+        resultsSection.classList.add('visible');
+        resultTarget.textContent = normalized;
+        resultTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        verdictBadge.textContent = 'Testing…';
+        verdictBadge.className = 'verdict-badge';
+        runsTableBody.innerHTML = '';
+        stabilityStrip.innerHTML = '';
+        stripAxisEnd.textContent = `ping ${depth}`;
+        timingNote.textContent = 'Measuring…';
+
+        document.getElementById('mMedian').innerHTML = '—<span class="unit"> ms</span>';
+        document.getElementById('mRange').textContent = '— / —';
+        document.getElementById('mJitter').innerHTML = '—<span class="unit"> ms</span>';
+        document.getElementById('mSuccess').innerHTML = '—<span class="unit">%</span>';
+
+        const results = [];
+        let usedMode = null;
+
+        for (let i = 0; i < depth; i++) {
+          renderProgress(`Sending request ${i + 1} of ${depth} to ${new URL(normalized).hostname}…`);
+          const r = await runSinglePing(normalized, i);
+          results.push(r);
+          usedMode = r.mode === 'cors' ? (usedMode || 'cors') : (usedMode === 'cors' ? usedMode : 'no-cors');
+
+          const cls = classify(r.ms, r.ok);
+          scopeData.push({ v: r.ok ? r.ms : null });
+          if (scopeData.length > SCOPE_MAX_POINTS) scopeData.shift();
+          drawScopeData();
+          scopeBig.textContent = (r.ok ? Math.round(r.ms) : '—') + ' ms';
+          scopeSmall.textContent = `ping ${i + 1} of ${depth} · ${r.ok ? 'ok' : 'failed'}`;
+
+          // table row
+          const tr = document.createElement('tr');
+          const pill = r.ok
+            ? (cls === 'slow' ? `<span class="status-pill slow">SLOW</span>` : `<span class="status-pill ok">OK</span>`)
+            : `<span class="status-pill err">FAIL</span>`;
+          tr.innerHTML = `<td>${i + 1}</td><td>${Math.round(r.ms)} ms</td><td>${pill}</td>`;
+          runsTableBody.appendChild(tr);
+
+          // strip tick
+          const tick = document.createElement('div');
+          tick.className = 'tick';
+          const maxBar = Math.max(...results.filter(x => x.ok).map(x => x.ms), 200);
+          const heightPct = r.ok ? Math.max(8, Math.min(100, (r.ms / maxBar) * 100)) : 100;
+          tick.style.height = heightPct + '%';
+          tick.style.background = tickColor(cls);
+          tick.setAttribute('data-tip', `#${i + 1}: ${r.ok ? Math.round(r.ms) + ' ms' : 'failed'}`);
+          stabilityStrip.appendChild(tick);
+
+          // small stagger so it visibly streams in, not blocking real timing
+          await new Promise(res => setTimeout(res, 40));
+        }
+
+        finalizeResults(results, normalized, usedMode, depth);
+      }
+
+      function finalizeResults(results, url, mode, depth) {
+        testRunning = false;
+        runBtn.disabled = false;
+        runBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 3l14 9-14 9V3z" fill="currentColor"/></svg> Run again';
+        scopeLive.style.display = 'none';
+        scopeStatusLeft.textContent = 'complete';
+
+        const okResults = results.filter(r => r.ok);
+        const failCount = results.length - okResults.length;
+        const latencies = okResults.map(r => r.ms);
+        const med = median(latencies);
+        const min = latencies.length ? Math.min(...latencies) : null;
+        const max = latencies.length ? Math.max(...latencies) : null;
+        const jitter = stddev(latencies);
+        const successRate = Math.round((okResults.length / results.length) * 100);
+
+        if (okResults.length === 0) {
+          document.getElementById('mMedian').innerHTML = `—<span class="unit"> ms</span>`;
+          document.getElementById('mMedianSub').textContent = 'no successful responses';
+          document.getElementById('mRange').textContent = '— / —';
+          document.getElementById('mJitter').innerHTML = `—<span class="unit"> ms</span>`;
+          document.getElementById('mJitterSub').textContent = 'not enough data';
+        } else {
+          document.getElementById('mMedian').innerHTML = `${Math.round(med)}<span class="unit"> ms</span>`;
+          document.getElementById('mMedianSub').textContent = mode === 'no-cors' ? 'total round trip (CORS-restricted)' : 'time to first byte';
+          document.getElementById('mRange').textContent = `${Math.round(min)} / ${Math.round(max)}`;
+          document.getElementById('mJitter').innerHTML = `${Math.round(jitter)}<span class="unit"> ms</span>`;
+          document.getElementById('mJitterSub').textContent = jitter < 80 ? 'tight — very consistent' : jitter < 250 ? 'moderate spread' : 'wide — inconsistent';
+        }
+        document.getElementById('mSuccess').innerHTML = `${successRate}<span class="unit">%</span>`;
+        document.getElementById('mSuccessSub').textContent = `${okResults.length} of ${results.length} requests completed`;
+
+        // verdict
+        let verdict = 'good', label = 'Solid';
+        if (okResults.length === 0) {
+          verdict = 'fail'; label = 'Unreachable';
+        } else if (successRate < 70 || med > 2500) {
+          verdict = 'fail'; label = 'Unreliable';
+        } else if (successRate < 95 || jitter > 300 || med > 900) {
+          verdict = 'warn'; label = 'Shaky';
+        }
+        verdictBadge.textContent = label;
+        verdictBadge.className = 'verdict-badge ' + verdict;
+
+        progressLine.textContent = `Done. ${results.length} requests sent to ${new URL(url).hostname}, ${failCount} failed.`;
+
+        // timing breakdown bars - synthesize from what we actually know
+        timingBars.innerHTML = '';
+        if (okResults.length === 0) {
+          timingBars.innerHTML = `<div style="font-family:var(--font-mono);font-size:12.5px;color:var(--text-faint);padding:6px 0;">No successful responses to chart.</div>`;
+        } else {
+          const rows = [
+            { label: 'Fastest', val: min, max: max || 1 },
+            { label: 'Median', val: med, max: max || 1 },
+            { label: 'Slowest', val: max, max: max || 1 },
+          ];
+          rows.forEach(r => {
+            const row = document.createElement('div');
+            row.className = 'timing-row';
+            const pct = max ? Math.max(4, (r.val / max) * 100) : 4;
+            row.innerHTML = `<div class="t-label">${r.label}</div><div class="timing-track"><div class="timing-fill" style="width:${pct}%"></div></div><div class="t-val">${Math.round(r.val)} ms</div>`;
+            timingBars.appendChild(row);
+          });
+        }
+
+        const host = new URL(url).hostname;
+        if (okResults.length === 0) {
+          timingNote.textContent = `Every request to ${host} failed outright — that points to the domain not resolving, the server refusing the connection, or a network-level block, rather than a CORS restriction. Double-check the URL is correct and reachable.`;
+        } else if (mode === 'no-cors') {
+          timingNote.textContent = `${host} doesn't send permissive CORS headers, so the browser only exposes total elapsed time for cross-origin requests — not a DNS/TCP/TLS breakdown. The numbers above are real, measured round-trip times; they're just not split into sub-phases.`;
+        } else {
+          timingNote.textContent = `Times above reflect server response time as measured by the Fetch API directly from your browser to ${host}, with no intermediary.`;
+        }
+      }
+
+      runBtn.addEventListener('click', startTest);
+      urlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') startTest(); });
+
+      /* ---------- FAQ ---------- */
+      const faqs = [
+        {
+          q: "Why might these numbers differ from WebPageTest or PageSpeed Insights?",
+          a: "Those tools run from dedicated lab servers with full instrumented browsers they control, so they can measure deep internals like DNS, TLS handshake, and render time separately. This tool runs in your own browser tab, bound by the same security rules any website's JavaScript follows — so for most cross-origin sites, we get accurate total response time, but not the same level of internal breakdown."
+        },
+        {
+          q: "Is this testing from my location or from a server somewhere else?",
+          a: "From wherever you're sitting right now. That's a feature, not a limitation — it tells you what the site feels like for someone on your actual connection, not an idealized lab network."
+        },
+        {
+          q: "Why did some pings fail when the site is clearly up?",
+          a: "A few possibilities: the site blocks cross-origin requests entirely (some APIs and login-walled sites do), there's a rate limit kicking in after repeated requests, or there was a genuine timeout. The raw request log shows exactly which pings failed and when."
+        },
+        {
+          q: "Do you store the URLs I test?",
+          a: "No. Everything happens in your browser tab and disappears when you close it or test something else."
+        },
+        {
+          q: "What counts as 'slow' or 'unreliable' in the verdict?",
+          a: "Solid means a fast median response with a high success rate and low jitter. Shaky means it mostly works but with noticeable inconsistency or a sluggish median. Unreliable means a meaningful share of requests failed outright or responses were consistently very slow."
+        }
+      ];
+      const faqList = document.getElementById('faqList');
+      faqs.forEach((f, i) => {
+        const item = document.createElement('div');
+        item.className = 'faq-item';
+        item.innerHTML = `
       <div class="faq-q" role="button" tabindex="0" aria-expanded="false">
         <span>${f.q}</span>
         <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       </div>
       <div class="faq-a"><div class="faq-a-inner">${f.a}</div></div>
     `;
-    const qEl = item.querySelector('.faq-q');
-    qEl.addEventListener('click', () => {
-      const isOpen = item.classList.contains('open');
-      document.querySelectorAll('.faq-item').forEach(el => el.classList.remove('open'));
-      if(!isOpen) item.classList.add('open');
-    });
-    qEl.addEventListener('keydown', (e) => { if(e.key==='Enter' || e.key===' '){ e.preventDefault(); qEl.click(); }});
-    faqList.appendChild(item);
-  });
+        const qEl = item.querySelector('.faq-q');
+        qEl.addEventListener('click', () => {
+          const isOpen = item.classList.contains('open');
+          document.querySelectorAll('.faq-item').forEach(el => el.classList.remove('open'));
+          if (!isOpen) item.classList.add('open');
+        });
+        qEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); qEl.click(); } });
+        faqList.appendChild(item);
+      });
 
-  /* ---------- Contact form (mailto handoff) ---------- */
-  const contactForm = document.getElementById('contactForm');
-  const formSuccess = document.getElementById('formSuccess');
-  if(contactForm){
-    contactForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const name = document.getElementById('cName').value.trim();
-      const email = document.getElementById('cEmail').value.trim();
-      const topic = document.getElementById('cTopic').value;
-      const message = document.getElementById('cMessage').value.trim();
-      const topicLabels = {bug:'Bug report', question:'General question', feature:'Feature idea', other:'Something else'};
-      const subject = `Pulsewidth — ${topicLabels[topic] || 'Message'} from ${name}`;
-      const body = `${message}\n\n—\nFrom: ${name} (${email})`;
-      const mailto = `mailto:kylash.rao@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      window.location.href = mailto;
-      formSuccess.classList.add('visible');
-    });
-  }
+      /* ---------- Contact form (mailto handoff) ---------- */
+      const contactForm = document.getElementById('contactForm');
+      const formSuccess = document.getElementById('formSuccess');
+      if (contactForm) {
+        contactForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const name = document.getElementById('cName').value.trim();
+          const email = document.getElementById('cEmail').value.trim();
+          const topic = document.getElementById('cTopic').value;
+          const message = document.getElementById('cMessage').value.trim();
+          const topicLabels = { bug: 'Bug report', question: 'General question', feature: 'Feature idea', other: 'Something else' };
+          const subject = `Pulsewidth — ${topicLabels[topic] || 'Message'} from ${name}`;
+          const body = `${message}\n\n—\nFrom: ${name} (${email})`;
+          const mailto = `mailto:kylash.rao@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+          window.location.href = mailto;
+          formSuccess.classList.add('visible');
+        });
+      }
 
-})();
-</script>
+    })();
+  </script>
 </body>
+
 </html>
